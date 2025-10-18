@@ -25,9 +25,16 @@ export default function GlobalInputBar() {
         setProviders([]);
       }
     })();
-    const off = window.parallelchat?.on('parallelchat/ai/ready', (payload: any) => {
+    // 修改：在 ai/ready 时同时刷新 providers 列表
+    const off = window.parallelchat?.on('parallelchat/ai/ready', async (payload: any) => {
       const ids = (payload?.ids ?? []) as string[];
       setReadyIds(ids);
+      try {
+        const value = (await window.parallelchat?.invoke('parallelchat/store/get', 'aiProviders')) as AiProvider[] | undefined;
+        setProviders(value ?? []);
+      } catch {
+        setProviders([]);
+      }
       // 优先从localStorage读取选择状态，没有时才默认全选
       setSelected((prev) => {
         const storedSelected = loadSelectedFromStorage();

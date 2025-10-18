@@ -82,7 +82,6 @@ export default function SettingsModal({
   const [enabled, setEnabled] = useState<Record<string, boolean>>({});
   const [saving, setSaving] = useState(false);
   const [clearingOne, setClearingOne] = useState<Record<string, boolean>>({});
-  const [clearingAll, setClearingAll] = useState(false);
 
   useEffect(() => {
     if (!open) return;
@@ -146,17 +145,7 @@ export default function SettingsModal({
     }
   };
 
-  const clearAll = async () => {
-    setClearingAll(true);
-    try {
-      window.parallelchat?.send('parallelchat/cache/clear-all');
-      toast.success('已清除所有缓存');
-    } catch {
-      toast.error('清除缓存失败');
-    } finally {
-      setClearingAll(false);
-    }
-  };
+
 
   return (
     <Dialog open={open} onOpenChange={(v) => !v && onClose()}>
@@ -211,18 +200,6 @@ export default function SettingsModal({
           </div>
         </div>
 
-        <Separator />
-
-        <div>
-          <div className="font-medium mb-2">缓存管理</div>
-          <Button
-            variant="secondary"
-            onClick={clearAll}
-            disabled={clearingAll}
-          >
-            {clearingAll ? '清除中...' : '一键清除所有缓存'}
-          </Button>
-        </div>
 
         <DialogFooter>
           <Button variant="ghost" onClick={onClose} disabled={saving}>
