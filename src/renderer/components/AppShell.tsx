@@ -159,11 +159,11 @@ export default function AppShell() {
   };
 
   return (
-    <div className="h-screen w-screen flex overflow-hidden bg-background text-foreground">
+    <div className="h-screen w-screen flex overflow-hidden bg-slate-50 text-foreground">
       <SessionSidebar />
 
-      <main className="flex-1 flex flex-col min-w-0">
-        <div className="flex items-center justify-between px-3 py-2 border-b bg-background/80">
+      <main className="flex-1 flex flex-col min-w-0 bg-white shadow-sm">
+        <div className="flex items-center justify-between px-3 py-2 bg-white/95 backdrop-blur-sm shadow-sm border-b border-slate-100">
           <div className="flex items-center gap-2 flex-1">
             {layoutMode === 'tabs' && providers.length > 0 && (
               <Tabs value={activeId} onValueChange={activateTab} className="flex-1">
@@ -207,7 +207,7 @@ export default function AppShell() {
 
         <Workspace />
 
-        <div>
+        <div className="bg-white shadow-lg border-t border-slate-100">
           <GlobalInputBar />
         </div>
 
@@ -215,11 +215,11 @@ export default function AppShell() {
 
         {tabMenu && (
           <div
-            className="fixed z-50 min-w-[140px] rounded-md border bg-popover text-popover-foreground shadow-md"
+            className="fixed z-50 min-w-[140px] rounded-lg bg-white shadow-xl ring-1 ring-slate-200 text-slate-700"
             style={{ left: tabMenu.x, top: tabMenu.y }}
             onClick={(e) => e.stopPropagation()}
           >
-            <button className="w-full text-left px-3 py-2 hover:bg-muted" onClick={doReload}>刷新</button>
+            <button className="w-full text-left px-3 py-2 hover:bg-slate-50 rounded-lg transition-colors" onClick={doReload}>刷新</button>
           </div>
         )}
       </main>

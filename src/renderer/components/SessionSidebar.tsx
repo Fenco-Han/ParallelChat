@@ -1,7 +1,37 @@
 import { useEffect, useMemo, useState } from 'react';
 import { Button } from './ui/button';
 
-type SessionItem = { id: string; title: string; createdAt: string; aiStates: Record<string, { url: string }> };
+type SessionItem = {
+  id: string;
+  title: string;
+  createdAt: string;
+  aiStates: Record<string, { url: string }>;
+};
+
+// 自定义滚动条样式
+const scrollbarStyles = `
+  .custom-scrollbar::-webkit-scrollbar {
+    width: 6px;
+  }
+
+  .custom-scrollbar::-webkit-scrollbar-track {
+    background: transparent;
+  }
+
+  .custom-scrollbar::-webkit-scrollbar-thumb {
+    background-color: #cbd5e1;
+    border-radius: 3px;
+    transition: background-color 0.2s ease;
+  }
+
+  .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+    background-color: #94a3b8;
+  }
+
+  .custom-scrollbar::-webkit-scrollbar-corner {
+    background: transparent;
+  }
+`;
 
 // SVG 图标组件
 const EditIcon = ({ size = 16 }: { size?: number }) => (
@@ -116,9 +146,11 @@ export default function SessionSidebar() {
   };
 
   return (
-    <aside className="w-64 shrink-0 border-r bg-slate-50/50 flex flex-col">
+    <>
+      <style>{scrollbarStyles}</style>
+      <aside className="w-64 shrink-0 bg-slate-50/80 backdrop-blur-sm flex flex-col">
       {/* 头部 */}
-      <div className=" px-4 py-[10px] border-b bg-white/80 backdrop-blur-sm flex items-center">
+      <div className=" px-4 py-[10px] bg-white/90 backdrop-blur-sm flex items-center">
         <div className="flex items-center justify-between w-full">
           <h2 className="font-semibold text-slate-800">会话历史</h2>
           <Button
@@ -134,7 +166,13 @@ export default function SessionSidebar() {
       </div>
 
       {/* 会话列表 */}
-      <div className="flex-1 overflow-auto">
+      <div
+        className="flex-1 overflow-auto custom-scrollbar"
+        style={{
+          scrollbarWidth: 'thin',
+          scrollbarColor: '#cbd5e1 transparent',
+        }}
+      >
         {!hasSessions && (
           <div className="p-4 text-center">
             <div className="text-sm text-slate-500 mb-2">暂无会话记录</div>
@@ -147,10 +185,10 @@ export default function SessionSidebar() {
             {sessions.map((s) => (
               <div
                 key={s.id}
-                className={`group mx-2 mb-2 rounded-lg border transition-all duration-200 ${
+                className={`group mx-2 mb-2 rounded-lg transition-all duration-200 ${
                   activeId === s.id
-                    ? 'bg-blue-50 border-blue-200 shadow-sm'
-                    : 'bg-white border-slate-200 hover:bg-slate-50 hover:border-slate-300'
+                    ? 'bg-blue-50/80 shadow-sm ring-1 ring-blue-200/50'
+                    : 'bg-white/60 hover:bg-white/80 hover:shadow-sm'
                 }`}
               >
                 <div className="p-3">
@@ -236,5 +274,6 @@ export default function SessionSidebar() {
         )}
       </div>
     </aside>
+    </>
   );
 }

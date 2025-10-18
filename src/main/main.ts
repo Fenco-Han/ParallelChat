@@ -14,7 +14,6 @@ import { getInjectionScript, getStatusCheckScript } from './ai-handlers/index';
 import Store from 'electron-store';
 import { autoUpdater } from 'electron-updater';
 import log from 'electron-log';
-import MenuBuilder from './menu';
 import { resolveHtmlPath } from './util';
 
 class AppUpdater {
@@ -85,6 +84,7 @@ const createWindow = async () => {
     show: false,
     width: 1024,
     height: 728,
+    autoHideMenuBar: true,
     icon: getAssetPath('icon.png'),
     webPreferences: {
       preload: app.isPackaged
@@ -98,6 +98,9 @@ const createWindow = async () => {
       webSecurity: true,
     },
   });
+
+  // 移除菜单栏
+  try { mainWindow.removeMenu(); } catch {}
 
   mainWindow.loadURL(resolveHtmlPath('index.html'));
 
@@ -117,8 +120,8 @@ const createWindow = async () => {
     mainWindow = null;
   });
 
-  const menuBuilder = new MenuBuilder(mainWindow);
-  menuBuilder.buildMenu();
+  // const menuBuilder = new MenuBuilder(mainWindow);
+  // menuBuilder.buildMenu();
 
   // Open urls in the user's browser
   mainWindow.webContents.setWindowOpenHandler((edata) => {

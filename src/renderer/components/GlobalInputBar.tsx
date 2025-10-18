@@ -1,5 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
-import { Button } from './ui/button';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { Textarea } from './ui/textarea';
 import { Checkbox } from './ui/checkbox';
 import { Label } from './ui/label';
@@ -13,6 +12,17 @@ export default function GlobalInputBar() {
   const [loading, setLoading] = useState(false);
   const [readyIds, setReadyIds] = useState<string[]>([]);
   const [activeSessionId, setActiveSessionId] = useState<string | undefined>(undefined);
+  const textareaRef = useRef<HTMLTextAreaElement>(null);
+
+  useEffect(() => {
+    const el = textareaRef.current;
+    if (!el) return;
+    const min = 40;
+    const max = 120;
+    el.style.height = 'auto';
+    const next = Math.min(Math.max(el.scrollHeight, min), max);
+    el.style.height = `${next}px`;
+  }, [text]);
 
   useEffect(() => {
     (async () => {
@@ -236,11 +246,12 @@ export default function GlobalInputBar() {
         {/* 输入区域 */}
         <div className="p-3">
           <Textarea
+            ref={textareaRef}
             placeholder="按 Enter 发送，Shift + Enter 换行。标签布局下按tab切换展示网站。"
             value={text}
             onChange={(e) => setText(e.target.value)}
             onKeyDown={onKeyDown}
-            className="h-[100px] border-0 resize-none overflow-y-auto focus:ring-0 focus:outline-none p-0 text-base"
+            className="min-h-[40px] max-h-[100px] border-0 resize-none overflow-y-auto focus:ring-0 focus:outline-none p-0 text-base"
             style={{ boxShadow: 'none' }}
           />
         </div>
