@@ -44,28 +44,12 @@ export function buildScript(text: string): string {
 
 export function buildStatusScript(): string {
   return `(() => {
-    try {
-      const targetAttributes = {
-        x: "7.71448",
-        y: "7.71436",
-        width: "8.57143",
-        height: "8.57143",
-        rx: "1.5",
-        fill: "currentColor",
-      };
-      const rects = document.querySelectorAll('rect');
-      for (const rect of Array.from(rects)) {
-        let isMatch = true;
-        for (const key in targetAttributes) {
-          if ((rect as any).getAttribute && rect.getAttribute(key) !== (targetAttributes as any)[key]) {
-            isMatch = false; break;
-          }
-        }
-        if (isMatch) return true;
-      }
-      return false;
-    } catch (_) {
-      return false;
-    }
-  })();`;
+  try {
+    const element = document.querySelector('g > rect[rx="1.5"]');
+    if (!element) return false;
+    return true;
+  } catch (_) {
+    return false;
+  }
+})();`;
 }

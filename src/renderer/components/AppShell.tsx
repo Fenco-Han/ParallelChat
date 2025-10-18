@@ -11,7 +11,7 @@ import { LayoutGridIcon, NotebookTabsIcon } from 'lucide-react';
 export default function AppShell() {
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [providers, setProviders] = useState<Array<{ id: string; name: string; url: string }>>([]);
-  const [layoutMode, setLayoutMode] = useState<'grid' | 'tabs'>('grid');
+  const [layoutMode, setLayoutMode] = useState<'grid' | 'tabs'>('tabs');
   const [activeId, setActiveId] = useState<string | undefined>(undefined);
   const [busyMap, setBusyMap] = useState<Record<string, boolean>>({});
   const [completeSet, setCompleteSet] = useState<Set<string>>(new Set());
@@ -37,7 +37,7 @@ export default function AppShell() {
         const layout = (await window.parallelchat?.invoke('parallelchat/store/get', 'layout')) as
           | { mode?: 'grid' | 'tabs'; order?: string[] }
           | undefined;
-        const mode = layout?.mode ?? 'grid';
+        const mode = layout?.mode ?? 'tabs';
         setLayoutMode(mode);
         const order = layout?.order && layout.order.length > 0 ? layout.order : aiList.map((p) => p.id);
         setActiveId(order[0]);
@@ -189,13 +189,13 @@ export default function AppShell() {
             {/* 分段选择器：网格 / 标签（含图标） */}
             <Tabs value={layoutMode} onValueChange={(v) => setLayoutTopDirect(v as 'grid' | 'tabs')}>
               <TabsList>
-                <TabsTrigger value="grid" title="网格视图">
-                  <LayoutGridIcon className="mr-1 size-4" aria-hidden />
-                  网格
-                </TabsTrigger>
                 <TabsTrigger value="tabs" title="标签视图">
                   <NotebookTabsIcon className="mr-1 size-4" aria-hidden />
                   标签
+                </TabsTrigger>
+                <TabsTrigger value="grid" title="网格视图">
+                  <LayoutGridIcon className="mr-1 size-4" aria-hidden />
+                  网格
                 </TabsTrigger>
               </TabsList>
             </Tabs>
