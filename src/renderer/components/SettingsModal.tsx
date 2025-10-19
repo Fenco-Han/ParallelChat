@@ -11,6 +11,7 @@ import { Card, CardContent, CardAction, CardTitle } from './ui/card';
 import { Separator } from './ui/separator';
 import { Switch } from './ui/switch';
 import { toast } from 'sonner';
+import { useTranslation } from 'react-i18next';
 
 type AiProvider = { id: string; name: string; url: string; handler?: string };
 
@@ -78,6 +79,7 @@ export default function SettingsModal({
   open: boolean;
   onClose: () => void;
 }) {
+  const { t } = useTranslation();
   const [providers, setProviders] = useState<AiProvider[]>([]);
   const [enabled, setEnabled] = useState<Record<string, boolean>>({});
   const [saving, setSaving] = useState(false);
@@ -137,9 +139,9 @@ export default function SettingsModal({
     setClearingOne((prev) => ({ ...prev, [id]: true }));
     try {
       window.parallelchat?.send('parallelchat/cache/clear', id);
-      toast.success(`已清除 ${PRESET_AI.find((p) => p.id === id)?.name} 的缓存`);
+      toast.success(t('settings.cacheCleared', { name: PRESET_AI.find((p) => p.id === id)?.name }));
     } catch {
-      toast.error(`清除 ${PRESET_AI.find((p) => p.id === id)?.name} 缓存失败`);
+      toast.error(t('settings.cacheClearFailed', { name: PRESET_AI.find((p) => p.id === id)?.name }));
     } finally {
       setClearingOne((prev) => ({ ...prev, [id]: false }));
     }
@@ -151,18 +153,18 @@ export default function SettingsModal({
     <Dialog open={open} onOpenChange={(v) => !v && onClose()}>
       <DialogContent className="w-[960px] max-w-[95vw] sm:max-w-[95vw] space-y-4">
         <DialogHeader>
-          <DialogTitle>模型管理</DialogTitle>
+          <DialogTitle>{t('settings.manageModels')}</DialogTitle>
         </DialogHeader>
 
         <div className="rounded-md border bg-muted/40 p-3 text-xs text-muted-foreground">
-          受安全限制，无法使用 Google 账号登录。如果使用 Qwen、ChatGPT、Claude 必须以非 Google 账号登录；Gemini 无法登录。
+          {t('settings.securityNote')}
         </div>
 
         <div>
-          <div className="font-medium mb-3">AI 管理</div>
+          <div className="font-medium mb-3">{t('settings.aiManagement')}</div>
           {Object.values(enabled).filter(Boolean).length > 3 && (
             <div className="mb-2 text-xs text-muted-foreground">
-              模型超过3个推荐使用标签模式布局
+              {t('settings.recommendTabsLayout')}
             </div>
           )}
           <div className="grid grid-cols-2 gap-3">
@@ -179,7 +181,7 @@ export default function SettingsModal({
                   </div>
                   <CardAction className="flex items-center gap-2 ml-3">
                     <div className="flex items-center gap-2">
-                      <span className="text-sm text-muted-foreground">启用</span>
+                      <span className="text-sm text-muted-foreground">{t('settings.enable')}</span>
                       <Switch
                         checked={!!enabled[p.id]}
                         onCheckedChange={() => toggleEnable(p.id)}
@@ -191,7 +193,7 @@ export default function SettingsModal({
                       onClick={() => clearOne(p.id)}
                       disabled={!enabled[p.id] || clearingOne[p.id]}
                     >
-                      {clearingOne[p.id] ? '清除中...' : '清除缓存'}
+                      {clearingOne[p.id] ? t('settings.clearing') : t('settings.clearCache')}
                     </Button>
                   </CardAction>
                 </CardContent>
@@ -203,10 +205,10 @@ export default function SettingsModal({
 
         <DialogFooter>
           <Button variant="ghost" onClick={onClose} disabled={saving}>
-            取消
+            {t('actions.cancel')}
           </Button>
           <Button onClick={save} disabled={saving}>
-            保存
+            {t('actions.save')}
           </Button>
         </DialogFooter>
       </DialogContent>

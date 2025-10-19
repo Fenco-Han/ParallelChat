@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
 import { Button } from './ui/button';
+import { useTranslation } from 'react-i18next';
 
 type SessionItem = {
   id: string;
@@ -70,6 +71,7 @@ const PlusIcon = ({ size = 16 }: { size?: number }) => (
 );
 
 export default function SessionSidebar() {
+  const { t, i18n } = useTranslation();
   const [sessions, setSessions] = useState<SessionItem[]>([]);
   const [activeId, setActiveId] = useState<string | undefined>(undefined);
   const [editingId, setEditingId] = useState<string | undefined>(undefined);
@@ -130,7 +132,7 @@ export default function SessionSidebar() {
   };
 
   const del = async (id: string) => {
-    if (confirm('确定要删除这个会话吗？')) {
+    if (confirm(t('sidebar.confirmDelete'))) {
       try { await window.parallelchat?.invoke('parallelchat/session/delete', id); } catch {}
     }
   };
@@ -148,11 +150,11 @@ export default function SessionSidebar() {
   return (
     <>
       <style>{scrollbarStyles}</style>
-      <aside className="w-64 shrink-0 bg-slate-50/80 backdrop-blur-sm flex flex-col">
+      <aside className="w-56 shrink-0 bg-slate-50/80 backdrop-blur-sm flex flex-col">
       {/* 头部 */}
       <div className=" px-4 py-[10px] bg-white/90 backdrop-blur-sm flex items-center">
         <div className="flex items-center justify-between w-full">
-          <h2 className="font-semibold text-slate-800">会话历史</h2>
+          <h2 className="font-semibold text-slate-800">{t('sidebar.history')}</h2>
           <Button
             variant="outline"
             size="sm"
@@ -160,7 +162,7 @@ export default function SessionSidebar() {
             className="h-8 px-3 text-xs font-medium bg-blue-50 border-blue-200 text-blue-700 hover:bg-blue-100 hover:border-blue-300"
           >
             <PlusIcon size={14} />
-            <span className="ml-1">新会话</span>
+            <span className="ml-1">{t('sidebar.newSession')}</span>
           </Button>
         </div>
       </div>
@@ -175,8 +177,8 @@ export default function SessionSidebar() {
       >
         {!hasSessions && (
           <div className="p-4 text-center">
-            <div className="text-sm text-slate-500 mb-2">暂无会话记录</div>
-            <div className="text-xs text-slate-400">开始对话后会自动创建会话</div>
+            <div className="text-sm text-slate-500 mb-2">{t('sidebar.noSessions')}</div>
+            <div className="text-xs text-slate-400">{t('sidebar.noSessionsTip')}</div>
           </div>
         )}
 
@@ -201,21 +203,21 @@ export default function SessionSidebar() {
                         onChange={(e) => setEditingTitle(e.target.value)}
                         onKeyDown={handleKeyDown}
                         className="w-full px-2 py-1 text-sm border border-slate-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                        placeholder="输入会话标题"
+                        placeholder={t('sidebar.inputTitle')}
                         autoFocus
                       />
                       <div className="flex items-center gap-1">
                         <button
                           onClick={saveEdit}
                           className="flex items-center justify-center w-6 h-6 rounded text-green-600 hover:bg-green-50 transition-colors"
-                          title="保存"
+                          title={t('actions.save')}
                         >
                           <CheckIcon size={14} />
                         </button>
                         <button
                           onClick={cancelEdit}
                           className="flex items-center justify-center w-6 h-6 rounded text-slate-500 hover:bg-slate-100 transition-colors"
-                          title="取消"
+                          title={t('actions.cancel')}
                         >
                           <CancelIcon size={14} />
                         </button>
@@ -231,10 +233,10 @@ export default function SessionSidebar() {
                         <div className={`text-sm font-medium truncate ${
                           activeId === s.id ? 'text-blue-800' : 'text-slate-800'
                         }`}>
-                          {s.title || '未命名会话'}
+                          {s.title || t('sidebar.untitled')}
                         </div>
                         <div className="text-xs text-slate-500 mt-1">
-                          {new Date(s.createdAt).toLocaleString('zh-CN', {
+                          {new Date(s.createdAt).toLocaleString(i18n.language, {
                             month: 'short',
                             day: 'numeric',
                             hour: '2-digit',
@@ -250,7 +252,7 @@ export default function SessionSidebar() {
                             beginEdit(s);
                           }}
                           className="flex items-center justify-center w-7 h-7 rounded hover:bg-slate-200 text-slate-600 hover:text-slate-800 transition-colors"
-                          title="编辑标题"
+                          title={t('sidebar.editTitle')}
                         >
                           <EditIcon size={14} />
                         </button>
@@ -260,7 +262,7 @@ export default function SessionSidebar() {
                             del(s.id);
                           }}
                           className="flex items-center justify-center w-7 h-7 rounded hover:bg-red-100 text-slate-500 hover:text-red-600 transition-colors"
-                          title="删除会话"
+                          title={t('sidebar.deleteSession')}
                         >
                           <DeleteIcon size={14} />
                         </button>

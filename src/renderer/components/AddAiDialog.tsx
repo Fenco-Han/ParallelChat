@@ -1,12 +1,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { Button } from './ui/button';
-import {
-  Dialog,
-  DialogContent,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from './ui/dialog';
+import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from './ui/dialog';
+import { useTranslation } from 'react-i18next';
 
 type AiProvider = { id: string; name: string; url: string; handler?: string };
 
@@ -74,6 +69,7 @@ export default function AddAiDialog({
   open: boolean;
   onClose: () => void;
 }) {
+  const { t } = useTranslation();
   const [existing, setExisting] = useState<AiProvider[]>([]);
   const [selected, setSelected] = useState<Record<string, boolean>>({});
 
@@ -131,7 +127,7 @@ export default function AddAiDialog({
     <Dialog open={open} onOpenChange={(v) => !v && onClose()}>
       <DialogContent className="w-[720px] max-w-[90vw]">
         <DialogHeader>
-          <DialogTitle>添加AI助手</DialogTitle>
+          <DialogTitle>{t('addAi.title')}</DialogTitle>
         </DialogHeader>
         <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
           {PRESET_AI.map((p) => {
@@ -151,7 +147,7 @@ export default function AddAiDialog({
                 }`}
                 onClick={() => toggle(p.id)}
                 disabled={isExisting}
-                title={isExisting ? '已添加' : '点击选择'}
+                title={isExisting ? t('addAi.added') : t('addAi.clickToSelect')}
               >
                 <div className="font-medium">{p.name}</div>
                 <div className="text-xs text-muted-foreground mt-1">{p.url}</div>
@@ -160,12 +156,8 @@ export default function AddAiDialog({
           })}
         </div>
         <DialogFooter>
-          <Button variant="ghost" onClick={onClose}>
-            取消
-          </Button>
-          <Button onClick={addSelected} disabled={!hasSelection}>
-            添加
-          </Button>
+          <Button variant="ghost" onClick={onClose}>{t('actions.cancel')}</Button>
+          <Button onClick={addSelected} disabled={!hasSelection}>{t('actions.add')}</Button>
         </DialogFooter>
       </DialogContent>
     </Dialog>

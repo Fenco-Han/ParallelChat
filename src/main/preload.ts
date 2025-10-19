@@ -29,14 +29,17 @@ export type Channels =
   | 'parallelchat/view/visible'
   | 'parallelchat/onboarding/start'
   | 'parallelchat/onboarding/complete'
-  // —— 会话管理 ——
   | 'parallelchat/session/new'
   | 'parallelchat/session/snapshot'
   | 'parallelchat/session/create'
   | 'parallelchat/session/load'
   | 'parallelchat/session/update-title'
   | 'parallelchat/session/delete'
-  | 'parallelchat/session/changed';
+  | 'parallelchat/session/changed'
+  // —— i18n ——
+  | 'parallelchat/i18n/get'
+  | 'parallelchat/i18n/set'
+  | 'parallelchat/i18n/changed';
 
 // 兼容 ERB 原有的 electronHandler，用于示例交互（不建议在业务中扩展它）。
 const electronHandler = {

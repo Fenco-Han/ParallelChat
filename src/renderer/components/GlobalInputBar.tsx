@@ -2,10 +2,12 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import { Textarea } from './ui/textarea';
 import { Checkbox } from './ui/checkbox';
 import { Label } from './ui/label';
+import { useTranslation } from 'react-i18next';
 
 type AiProvider = { id: string; name: string; url: string; handler?: string };
 
 export default function GlobalInputBar() {
+  const { t } = useTranslation();
   const [text, setText] = useState('');
   const [providers, setProviders] = useState<AiProvider[]>([]);
   const [selected, setSelected] = useState<Record<string, boolean>>({});
@@ -256,7 +258,7 @@ export default function GlobalInputBar() {
         <div className="p-3">
           <Textarea
             ref={textareaRef}
-            placeholder="按 Enter 发送，Shift + Enter 换行。标签布局下按tab切换展示网站。"
+            placeholder={t('input.hint')}
             value={text}
             onChange={(e) => setText(e.target.value)}
             onCompositionStart={() => setIsComposing(true)}
@@ -279,7 +281,7 @@ export default function GlobalInputBar() {
                      checked={isAllSelected ? true : isIndeterminate ? 'indeterminate' : false}
                      onCheckedChange={toggleAll}
                    />
-                  <span>全选</span>
+                  <span>{t('input.selectAll')}</span>
                 </Label>
 
                 {/* 分隔线 */}
@@ -309,7 +311,7 @@ export default function GlobalInputBar() {
                 );
               })}
               {providers.length === 0 && (
-                <span className="text-sm text-gray-500">请先通过"添加AI"添加助手</span>
+                <span className="text-sm text-gray-500">{t('input.addAiPrompt')}</span>
               )}
             </div>
           </div>

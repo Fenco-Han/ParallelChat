@@ -1,8 +1,10 @@
 import { useEffect, useRef } from 'react';
 import { Empty, EmptyHeader, EmptyTitle, EmptyDescription, EmptyMedia } from './ui/empty';
+import { useTranslation } from 'react-i18next';
 
 export default function Workspace() {
   const ref = useRef<HTMLDivElement | null>(null);
+  const { t } = useTranslation();
 
   useEffect(() => {
     const el = ref.current;
@@ -66,9 +68,9 @@ export default function Workspace() {
               <line x1="15" x2="9" y1="9" y2="15"/>
             </svg>
           </EmptyMedia>
-          <EmptyTitle>暂未添加模型</EmptyTitle>
+          <EmptyTitle>{t('workspace.emptyTitle')}</EmptyTitle>
           <EmptyDescription>
-            请在模型管理中添加模型以开始使用 ParallelChat。
+            {t('workspace.emptyDesc', { app: t('app.title') })}
           </EmptyDescription>
         </EmptyHeader>
       </Empty>

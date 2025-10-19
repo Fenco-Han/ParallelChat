@@ -1,0 +1,50 @@
+{
+  "menu": {
+    "darwin": {
+      "appLabel": "Electron",
+      "about": "About ElectronReact",
+      "services": "Services",
+      "hideApp": "Hide ElectronReact",
+      "hideOthers": "Hide Others",
+      "showAll": "Show All",
+      "quit": "Quit"
+    },
+    "edit": {
+      "label": "Edit",
+      "undo": "Undo",
+      "redo": "Redo",
+      "cut": "Cut",
+      "copy": "Copy",
+      "paste": "Paste",
+      "selectAll": "Select All"
+    },
+    "view": {
+      "label": "View",
+      "reload": "Reload",
+      "toggleFullscreen": "Toggle Full Screen",
+      "toggleDevTools": "Toggle Developer Tools"
+    },
+    "window": {
+      "label": "Window",
+      "minimize": "Minimize",
+      "close": "Close",
+      "bringAllToFront": "Bring All to Front"
+    },
+    "help": {
+      "label": "Help",
+      "learnMore": "Learn More",
+      "documentation": "Documentation",
+      "communityDiscussions": "Community Discussions",
+      "searchIssues": "Search Issues"
+    },
+    "default": {
+      "file": "File",
+      "open": "Open",
+      "close": "Close",
+      "view": "View",
+      "reload": "Reload",
+      "toggleFullscreen": "Toggle Full Screen",
+      "toggleDevTools": "Toggle Developer Tools"
+    }
+  }
+}

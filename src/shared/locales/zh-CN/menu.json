@@ -1,0 +1,50 @@
+{
+  "menu": {
+    "darwin": {
+      "appLabel": "Electron",
+      "about": "关于 ElectronReact",
+      "services": "服务",
+      "hideApp": "隐藏 ElectronReact",
+      "hideOthers": "隐藏其他",
+      "showAll": "显示全部",
+      "quit": "退出"
+    },
+    "edit": {
+      "label": "编辑",
+      "undo": "撤销",
+      "redo": "重做",
+      "cut": "剪切",
+      "copy": "复制",
+      "paste": "粘贴",
+      "selectAll": "全选"
+    },
+    "view": {
+      "label": "视图",
+      "reload": "重新加载",
+      "toggleFullscreen": "切换全屏",
+      "toggleDevTools": "切换开发者工具"
+    },
+    "window": {
+      "label": "窗口",
+      "minimize": "最小化",
+      "close": "关闭",
+      "bringAllToFront": "全部置于顶层"
+    },
+    "help": {
+      "label": "帮助",
+      "learnMore": "了解更多",
+      "documentation": "文档",
+      "communityDiscussions": "社区讨论",
+      "searchIssues": "搜索问题"
+    },
+    "default": {
+      "file": "文件",
+      "open": "打开",
+      "close": "关闭",
+      "view": "视图",
+      "reload": "重新加载",
+      "toggleFullscreen": "切换全屏",
+      "toggleDevTools": "切换开发者工具"
+    }
+  }
+}

@@ -1,0 +1,68 @@
+{
+  "app": {
+    "title": "ParallelChat",
+    "name": "ParallelChat"
+  },
+  "language": {
+    "en": "English",
+    "zhCN": "Chinese",
+    "switch": "Switch Language"
+  },
+  "layout": {
+    "tabs": "Tabs",
+    "grid": "Grid",
+    "tabsTitle": "Tabs view",
+    "gridTitle": "Grid view"
+  },
+  "settings": {
+    "manageModels": "Model Management",
+    "aiManagement": "AI Management",
+    "securityNote": "Due to security restrictions, Google account login is unavailable. Use non-Google accounts for Qwen, ChatGPT, Claude; Gemini cannot log in.",
+    "recommendTabsLayout": "If more than 3 models are enabled, Tabs layout is recommended.",
+    "enable": "Enable",
+    "clearing": "Clearing...",
+    "clearCache": "Clear Cache",
+    "cacheCleared": "Cleared {{name}} cache",
+    "cacheClearFailed": "Failed to clear {{name}} cache"
+  },
+  "status": {
+    "generating": "Generating..."
+  },
+  "messages": {
+    "hello": "Hello",
+    "welcome": "Welcome to ParallelChat"
+  },
+  "sidebar": {
+    "history": "History",
+    "newSession": "New Session",
+    "noSessions": "No sessions yet",
+    "noSessionsTip": "A session is created automatically after you start chatting",
+    "inputTitle": "Enter session title",
+    "untitled": "Untitled Session",
+    "editTitle": "Edit title",
+    "deleteSession": "Delete session",
+    "confirmDelete": "Are you sure to delete this session?"
+  },
+  "actions": {
+    "cancel": "Cancel",
+    "save": "Save",
+    "add": "Add"
+  },
+  "devtools": {
+    "inspectElement": "Inspect element"
+  },
+  "input": {
+    "hint": "Press Enter to send, Shift+Enter for newline. In Tabs layout, use Tab to switch websites.",
+    "selectAll": "Select All",
+    "addAiPrompt": "Please add assistants via \"Add AI\" first"
+  },
+  "addAi": {
+    "title": "Add AI Assistant",
+    "added": "Added",
+    "clickToSelect": "Click to select"
+  },
+  "workspace": {
+    "emptyTitle": "No models added yet",
+    "emptyDesc": "Please add models in Model Management to start using {{app}}."
+  }
+}

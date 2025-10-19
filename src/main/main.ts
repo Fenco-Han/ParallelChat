@@ -15,6 +15,11 @@ import Store from 'electron-store';
 import { autoUpdater } from 'electron-updater';
 import log from 'electron-log';
 import { resolveHtmlPath } from './util';
+import i18next from 'i18next';
+import enCommon from '../shared/locales/en/common.json';
+import enMenu from '../shared/locales/en/menu.json';
+import zhCommon from '../shared/locales/zh-CN/common.json';
+import zhMenu from '../shared/locales/zh-CN/menu.json';
 
 class AppUpdater {
   constructor() {
@@ -175,6 +180,7 @@ app.on('window-all-closed', () => {
 app
   .whenReady()
   .then(() => {
+    initI18n();
     createWindow();
     app.on('activate', () => {
       // On macOS it's common to re-create a window in the app when the
@@ -244,10 +250,66 @@ type StoreSchema = {
    * - true：不再触发引导
    */
   hasOnboarded?: boolean;
+  /** 应用设置：语言等 */
+  settings?: {
+    /** 当前语言 */ language?: 'en' | 'zh-CN';
+  };
 };
 
 // 指定配置文件名称，默认存储在 app.getPath('userData') 下
 const store = new Store<StoreSchema>({ name: 'parallelchat' });
+
+// —— i18n 初始化（主进程）——
+type Language = 'en' | 'zh-CN';
+const SUPPORTED_LANGS: Language[] = ['en', 'zh-CN'];
+const resources = {
+  en: { common: enCommon, menu: enMenu },
+  'zh-CN': { common: zhCommon, menu: zhMenu },
+};
+
+function pickSupported(input: string): Language {
+  const lower = (input || '').toLowerCase();
+  if (lower.startsWith('zh')) return 'zh-CN';
+  return 'en';
+}
+
+function getInitialLanguage(): Language {
+  try {
+    const s = (store.get('settings') as { language?: Language } | undefined) || {};
+    if (s.language && SUPPORTED_LANGS.includes(s.language)) return s.language;
+  } catch {}
+  const sys = app.getLocale();
+  const init = pickSupported(sys);
+  try {
+    const existing = (store.get('settings') as any) || {};
+    store.set('settings', { ...existing, language: init });
+  } catch {}
+  return init;
+}
+
+function initI18n() {
+  const initial = getInitialLanguage();
+  i18next.init({
+    lng: initial,
+    fallbackLng: 'en',
+    resources,
+    ns: ['common', 'menu'],
+    defaultNS: 'common',
+    interpolation: { escapeValue: false },
+  });
+}
+
+function setLanguage(lang: Language) {
+  if (!SUPPORTED_LANGS.includes(lang)) return;
+  i18next.changeLanguage(lang);
+  try {
+    const existing = (store.get('settings') as any) || {};
+    store.set('settings', { ...existing, language: lang });
+  } catch {}
+  try {
+    mainWindow?.webContents.send('parallelchat/i18n/changed', lang);
+  } catch {}
+}
 
 // 允许读写的键集合（白名单）
 const allowedKeys: Array<keyof StoreSchema> = [
@@ -256,6 +318,7 @@ const allowedKeys: Array<keyof StoreSchema> = [
   'aiProviders',
   'layout',
   'hasOnboarded',
+  'settings',
 ];
 
 // 读取：验证键合法后返回存储值
@@ -276,6 +339,17 @@ ipcMain.handle(
     store.set(key, value as any);
   },
 );
+
+// —— i18n IPC 通道 ——
+ipcMain.handle('parallelchat/i18n/get', () => {
+  const language = (i18next.language as Language) || getInitialLanguage();
+  return { language, supported: SUPPORTED_LANGS };
+});
+
+ipcMain.handle('parallelchat/i18n/set', (_e, lang: Language) => {
+  setLanguage(lang);
+  return lang;
+});
 
 // —— 缓存清理：支持单个 AI 与全部 ——
 ipcMain.on('parallelchat/cache/clear', (_e, id: string) => {
