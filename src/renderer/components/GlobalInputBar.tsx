@@ -212,7 +212,16 @@ export default function GlobalInputBar() {
     } catch {}
   };
 
+  const [isComposing, setIsComposing] = useState(false);
   const onKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
+    const native = e.nativeEvent as any;
+    const composing =
+      isComposing ||
+      (native && native.isComposing) ||
+      (typeof (e as any).keyCode === 'number' && (e as any).keyCode === 229) ||
+      (typeof native?.keyCode === 'number' && native.keyCode === 229);
+    if (composing) return;
+  
     if (e.key === 'Enter' && !e.shiftKey) {
       e.preventDefault();
       send();
@@ -250,6 +259,8 @@ export default function GlobalInputBar() {
             placeholder="按 Enter 发送，Shift + Enter 换行。标签布局下按tab切换展示网站。"
             value={text}
             onChange={(e) => setText(e.target.value)}
+            onCompositionStart={() => setIsComposing(true)}
+            onCompositionEnd={() => setIsComposing(false)}
             onKeyDown={onKeyDown}
             className="min-h-[40px] max-h-[100px] border-0 resize-none overflow-y-auto focus:ring-0 focus:outline-none p-0 text-base"
             style={{ boxShadow: 'none' }}

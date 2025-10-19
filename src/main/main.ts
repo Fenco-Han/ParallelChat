@@ -137,6 +137,15 @@ const createWindow = async () => {
   mainWindow.webContents.on('did-finish-load', () => {
     try {
       syncAiViews();
+      // 首次启动默认布局为 tabs（若未设置）
+      try {
+        const existingLayout = (store.get('layout') as StoreSchema['layout'] | undefined);
+        if (!existingLayout) {
+          const providers = getProviders();
+          const order = providers.map((p) => p.id);
+          store.set('layout', { mode: 'tabs', order });
+        }
+      } catch {}
       mainWindow?.webContents.send('parallelchat/ai/ready', {
         ids: Array.from(viewsRegistry.keys()),
       });
@@ -560,7 +569,7 @@ function applyLayout() {
 
   const providers = (store.get('aiProviders') as AiProvider[] | undefined) ?? [];
   const layout = (store.get('layout') as StoreSchema['layout'] | undefined);
-  const mode = layout?.mode ?? 'grid';
+  const mode = layout?.mode ?? 'tabs';
   const order = layout?.order && layout.order.length > 0
     ? layout.order
     : providers.map((p) => p.id);
@@ -632,7 +641,7 @@ ipcMain.on('parallelchat/layout/active', (_e, id: string) => {
   const ids = new Set(providers.map((p) => p.id));
   if (!ids.has(id)) return;
   const current = (store.get('layout') as StoreSchema['layout'] | undefined) ?? {
-    mode: 'grid',
+    mode: 'tabs',
     order: providers.map((p) => p.id),
   };
   const nextOrder = [id, ...current.order.filter((x) => x !== id)];
@@ -738,24 +747,21 @@ ipcMain.handle('parallelchat/session/snapshot', () => {
 });
 
 // 创建会话：写入 store 并设为活动
-ipcMain.handle(
-  'parallelchat/session/create',
-  (_e, payload: { title: string; aiStates: Record<string, { url: string }> }) => {
-    try {
-      const id = genId();
-      const title = truncateTitle(payload?.title || '');
-      const createdAt = new Date().toISOString();
-      const sessions = ((store.get('sessions') as StoreSchema['sessions']) ?? []) as NonNullable<StoreSchema['sessions']>;
-      const next = [...sessions, { id, title, createdAt, aiStates: payload.aiStates }];
-      try { store.set('sessions', next as any); } catch {}
-      try { store.set('activeSessionId', id as any); } catch {}
-      try { mainWindow?.webContents.send('parallelchat/session/changed', { activeId: id }); } catch {}
-      return { id };
-    } catch (err) {
-      return { error: String((err as any)?.message || err) };
-    }
+ipcMain.handle('parallelchat/session/create', async (_e, payload: { title: string; aiStates: Record<string, { url: string }> }) => {
+  try {
+    const id = genId();
+    const title = truncateTitle(payload?.title || '');
+    const createdAt = new Date().toISOString();
+    const sessions = ((store.get('sessions') as StoreSchema['sessions']) ?? []) as NonNullable<StoreSchema['sessions']>;
+    const next = [...sessions, { id, title, createdAt, aiStates: payload.aiStates }];
+    try { store.set('sessions', next as any); } catch {}
+    try { store.set('activeSessionId', id as any); } catch {}
+    try { mainWindow?.webContents.send('parallelchat/session/changed', { activeId: id }); } catch {}
+    return { id };
+  } catch (err) {
+    return { error: String((err as any)?.message || err) };
   }
-);
+});
 
 // 加载会话：恢复各视图到保存的URL，并设为活动
 ipcMain.handle('parallelchat/session/load', async (_e, id: string) => {
