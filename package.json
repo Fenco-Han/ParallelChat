@@ -1,36 +1,34 @@
 {
   "name": "parallelchat",
-  "description": "A foundation for scalable desktop apps",
+  "description": "ParallelChat 桌面应用：并行多模型对话与管理",
   "keywords": [
     "electron",
-    "boilerplate",
+    "desktop",
+    "chat",
+    "llm",
+    "ai",
+    "parallel",
     "react",
-    "typescript",
-    "ts",
-    "sass",
-    "webpack",
-    "hot",
-    "reload"
+    "typescript"
   ],
-  "homepage": "https://github.com/electron-react-boilerplate/electron-react-boilerplate#readme",
+  "homepage": "https://parallelchat.top",
   "bugs": {
-    "url": "https://github.com/electron-react-boilerplate/electron-react-boilerplate/issues"
+    "url": "https://github.com/parallelchat/parallelchat/issues"
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/electron-react-boilerplate/electron-react-boilerplate.git"
+    "url": "git+https://github.com/parallelchat/parallelchat.git"
   },
-  "license": "MIT",
+  "license": "AGPL-3.0-only",
   "author": {
-    "name": "Electron React Boilerplate Maintainers",
-    "email": "electronreactboilerplate@gmail.com",
-    "url": "https://electron-react-boilerplate.js.org"
+    "name": "LiShuang",
+    "email": "lishuang@gmx.com",
+    "url": "https://parallelchat.top"
   },
   "contributors": [
     {
-      "name": "Amila Welihinda",
-      "email": "amilajack@gmail.com",
-      "url": "https://github.com/amilajack"
+      "name": "LiShuang",
+      "url": "https://parallelchat.top"
     }
   ],
   "main": "./.erb/dll/main.bundle.dev.js",
@@ -254,7 +252,7 @@
     ],
     "publish": {
       "provider": "generic",
-      "url": "https://parallelchat.top/parallelchat"
+      "url": "https://update.parallelchat.top"
     }
   },
   "collective": {

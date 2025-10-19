@@ -1,13 +1,31 @@
 {
   "name": "parallelchat",
-  "version": "1.0.0",
-  "description": "A foundation for scalable desktop apps",
+  "version": "0.1.0",
+  "description": "ParallelChat 桌面应用：并行多模型对话与管理",
   "license": "MIT",
   "author": {
-    "name": "Electron React Boilerplate Maintainers",
-    "email": "electronreactboilerplate@gmail.com",
-    "url": "https://github.com/electron-react-boilerplate"
+    "name": "ParallelChat Team",
+    "email": "dev@parallelchat.top",
+    "url": "https://parallelchat.top"
   },
+  "homepage": "https://parallelchat.top",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/parallelchat/parallelchat.git"
+  },
+  "bugs": {
+    "url": "https://github.com/parallelchat/parallelchat/issues"
+  },
+  "keywords": [
+    "electron",
+    "desktop",
+    "chat",
+    "llm",
+    "ai",
+    "parallel",
+    "react",
+    "typescript"
+  ],
   "main": "./dist/main/main.js",
   "scripts": {
     "rebuild": "node -r ts-node/register ../../.erb/scripts/electron-rebuild.js",
