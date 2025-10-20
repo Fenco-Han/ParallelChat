@@ -217,7 +217,7 @@ export default function AppShell() {
                 </TabsTrigger>
                </TabsList>
              </Tabs>
-            
+
              <Button
                variant="outline"
                size="sm"
@@ -226,15 +226,22 @@ export default function AppShell() {
              >
                {t('settings.manageModels')}
              </Button>
-            <select
+            {/* 语言切换：紧凑分段，不使用下拉，避免遮挡 */}
+            <Tabs
               value={lang}
-              onChange={(e) => window.parallelchat?.invoke('parallelchat/i18n/set', e.target.value)}
-              className="text-sm px-2 py-1 border rounded-md bg-white"
+              onValueChange={(v) => {
+                const next = v as 'en' | 'zh-CN';
+                setLang(next);
+                window.parallelchat?.invoke('parallelchat/i18n/set', next);
+              }}
+              className="ml-1"
               title={t('language.switch')}
             >
-              <option value="en">{t('language.en')}</option>
-              <option value="zh-CN">{t('language.zhCN')}</option>
-            </select>
+              <TabsList className="h-8 rounded-md">
+                <TabsTrigger value="en" className="px-2 h-8 text-xs">EN</TabsTrigger>
+                <TabsTrigger value="zh-CN" className="px-2 h-8 text-xs">中文</TabsTrigger>
+              </TabsList>
+            </Tabs>
            </div>
          </div>
 

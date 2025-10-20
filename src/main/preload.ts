@@ -39,7 +39,15 @@ export type Channels =
   // —— i18n ——
   | 'parallelchat/i18n/get'
   | 'parallelchat/i18n/set'
-  | 'parallelchat/i18n/changed';
+  | 'parallelchat/i18n/changed'
+  // —— 应用版本与更新 ——
+  | 'parallelchat/app/version'
+  | 'parallelchat/update/check'
+  | 'parallelchat/update/install'
+  | 'parallelchat/update/available'
+  | 'parallelchat/update/downloading'
+  | 'parallelchat/update/downloaded'
+  | 'parallelchat/update/error';
 
 // 兼容 ERB 原有的 electronHandler，用于示例交互（不建议在业务中扩展它）。
 const electronHandler = {
@@ -48,13 +56,9 @@ const electronHandler = {
       ipcRenderer.send(channel, ...args);
     },
     on(channel: ElectronChannels, func: (...args: unknown[]) => void) {
-      const subscription = (_event: IpcRendererEvent, ...args: unknown[]) =>
-        func(...args);
+      const subscription = (_event: IpcRendererEvent, ...args: unknown[]) => func(...args);
       ipcRenderer.on(channel, subscription);
-
-      return () => {
-        ipcRenderer.removeListener(channel, subscription);
-      };
+      return () => ipcRenderer.removeListener(channel, subscription);
     },
     once(channel: ElectronChannels, func: (...args: unknown[]) => void) {
       ipcRenderer.once(channel, (_event, ...args) => func(...args));

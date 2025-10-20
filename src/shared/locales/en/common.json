@@ -41,7 +41,14 @@
     "untitled": "Untitled Session",
     "editTitle": "Edit title",
     "deleteSession": "Delete session",
-    "confirmDelete": "Are you sure to delete this session?"
+    "confirmDelete": "Are you sure to delete this session?",
+    "footerVersion": "Version {{version}}",
+    "updateAvailable": "Update available: {{version}}",
+    "updating": "Downloading update...",
+    "downloaded": "Update ready",
+    "installNow": "Install and restart",
+    "confirmInstall": "Install update and restart now?",
+    "confirmUpdateCheck": "Check and download updates?"
   },
   "actions": {
     "cancel": "Cancel",

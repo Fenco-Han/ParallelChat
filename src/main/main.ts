@@ -134,6 +134,22 @@ const createWindow = async () => {
     return { action: 'deny' };
   });
 
+  // 更新事件转发到渲染器（先注册监听，再触发检查）
+  try {
+    autoUpdater.on('update-available', (info) => {
+      try { mainWindow?.webContents.send('parallelchat/update/available', info); } catch {}
+    });
+    autoUpdater.on('download-progress', (p) => {
+      try { mainWindow?.webContents.send('parallelchat/update/downloading', p); } catch {}
+    });
+    autoUpdater.on('update-downloaded', (info) => {
+      try { mainWindow?.webContents.send('parallelchat/update/downloaded', info); } catch {}
+    });
+    autoUpdater.on('error', (err) => {
+      try { mainWindow?.webContents.send('parallelchat/update/error', { message: String((err as any)?.message || err) }); } catch {}
+    });
+  } catch {}
+
   // Remove this if your app does not use auto updates
   // eslint-disable-next-line
   new AppUpdater();
@@ -349,6 +365,30 @@ ipcMain.handle('parallelchat/i18n/get', () => {
 ipcMain.handle('parallelchat/i18n/set', (_e, lang: Language) => {
   setLanguage(lang);
   return lang;
+});
+
+// —— 应用版本与更新 IPC ——
+ipcMain.handle('parallelchat/app/version', () => {
+  try {
+    return app.getVersion();
+  } catch {
+    return app.getVersion();
+  }
+});
+
+ipcMain.handle('parallelchat/update/check', async () => {
+  try {
+    const result = await autoUpdater.checkForUpdates();
+    return { ok: true, info: result?.updateInfo };
+  } catch (err) {
+    return { ok: false, error: String((err as any)?.message || err) };
+  }
+});
+
+ipcMain.on('parallelchat/update/install', () => {
+  try {
+    autoUpdater.quitAndInstall(false, true);
+  } catch {}
 });
 
 // —— 缓存清理：支持单个 AI 与全部 ——

@@ -1,15 +1,13 @@
 {
   "name": "parallelchat",
+  "version": "0.0.1",
   "description": "ParallelChat 桌面应用：并行多模型对话与管理",
   "keywords": [
-    "electron",
     "desktop",
     "chat",
     "llm",
     "ai",
-    "parallel",
-    "react",
-    "typescript"
+    "parallel"
   ],
   "homepage": "https://parallelchat.top",
   "bugs": {
@@ -208,8 +206,20 @@
     "mac": {
       "notarize": false,
       "target": [
-        { "target": "dmg", "arch": ["arm64", "x64"] },
-        { "target": "zip", "arch": ["arm64", "x64"] }
+        {
+          "target": "dmg",
+          "arch": [
+            "arm64",
+            "x64"
+          ]
+        },
+        {
+          "target": "zip",
+          "arch": [
+            "arm64",
+            "x64"
+          ]
+        }
       ],
       "type": "distribution",
       "hardenedRuntime": true,

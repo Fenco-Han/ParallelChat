@@ -41,7 +41,14 @@
     "untitled": "未命名会话",
     "editTitle": "编辑标题",
     "deleteSession": "删除会话",
-    "confirmDelete": "确定要删除这个会话吗？"
+    "confirmDelete": "确定要删除这个会话吗？",
+    "footerVersion": "版本 {{version}}",
+    "updateAvailable": "发现新版本：{{version}}",
+    "updating": "更新下载中...",
+    "downloaded": "更新已就绪",
+    "installNow": "安装并重启",
+    "confirmInstall": "立即安装更新并重启？",
+    "confirmUpdateCheck": "检查并下载更新？"
   },
   "actions": {
     "cancel": "取消",
