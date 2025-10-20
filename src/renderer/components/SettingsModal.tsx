@@ -65,6 +65,12 @@ const PRESET_AI: AiProvider[] = [
     handler: 'claude',
   },
   {
+    id: 'grok',
+    name: 'Grok',
+    url: 'https://grok.com/',
+    handler: 'grok',
+  },
+  {
     id: 'gemini',
     name: 'Gemini',
     url: 'https://gemini.google.com/app',

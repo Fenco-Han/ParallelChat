@@ -704,3 +704,105 @@ checkSpecificRectangle();
 ```
     
 
+## grok
+1. **网址**：https://grok.com/
+2. **发送消息**：
+   ```javascript
+// 自动输入并发送消息到 Grok 聊天框
+
+function sendMessageToGrok(message) {
+  // 1. 找到输入框
+  const textarea = document.querySelector('textarea[aria-label="向 Grok 提任何问题"]');
+  if (!textarea) {
+    console.error('未找到输入框');
+    return false;
+  }
+
+  // 2. 写入内容（优先使用属性描述符）
+  const setter = Object.getOwnPropertyDescriptor(HTMLTextAreaElement.prototype, 'value')?.set;
+  if (setter) setter.call(textarea, message);
+  else textarea.value = message;
+
+  // 3. 聚焦并触发完整事件序列（确保框架检测到变化）
+  textarea.focus();
+  ['input', 'change'].forEach(type => {
+    textarea.dispatchEvent(new Event(type, { bubbles: true, cancelable: true }));
+  });
+
+  // 4. 优先模拟回车发送
+  const enterEvent = new KeyboardEvent('keydown', {
+    key: 'Enter', code: 'Enter', keyCode: 13, which: 13,
+    bubbles: true, cancelable: true
+  });
+  textarea.dispatchEvent(enterEvent);
+
+  // 5. 兜底：点击发送按钮（多选择器策略）
+  setTimeout(() => {
+    const submitButton =
+      document.querySelector('button[type="submit"][aria-label="提交"]') ||
+      document.querySelector('button:has(svg path[d*="M4 9.2"])');
+
+    // 兼容不支持 :has 的环境
+    let iconButton = null;
+    if (!submitButton) {
+      const svgPath = document.querySelector('button svg path[d*="M4 9.2"]');
+      iconButton = svgPath ? svgPath.closest('button') : null;
+    }
+
+    const button = (submitButton || iconButton) as HTMLButtonElement | null;
+    if (button && !button.disabled) {
+      button.click();
+      console.log('消息已发送:', message);
+    } else {
+      console.warn('未找到可用的发送按钮');
+    }
+  }, 100);
+
+  return true;
+}
+
+// 使用示例
+// sendMessageToGrok('你好，这是一条测试消息');
+
+// 如果需要延迟发送（等待页面加载完成）
+function sendMessageWithDelay(message, delayMs = 1000) {
+  setTimeout(() => {
+    sendMessageToGrok(message);
+  }, delayMs);
+}
+
+// 批量发送多条消息（每条消息之间有间隔）
+function sendMultipleMessages(messages, intervalMs = 3000) {
+  messages.forEach((message, index) => {
+    setTimeout(() => {
+      sendMessageToGrok(message);
+    }, index * intervalMs);
+  });
+}
+
+// 使用示例：
+// sendMessageWithDelay('你好！', 1000);
+// sendMultipleMessages(['第一条消息', '第二条消息', '第三条消息'], 5000);
+```
+3. 判断回复状态
+```
+function checkSpecificRectangle() {
+    // 获取你提供的第一个SVG的路径数据
+    const rectanglePath = "M4 9.2v5.6c0 1.116 0 1.673.11 2.134a4 4 0 0 0 2.956 2.956c.46.11 1.018.11 2.134.11h5.6c1.116 0 1.673 0 2.134-.11a4 4 0 0 0 2.956-2.956c.11-.46.11-1.018.11-2.134V9.2c0-1.116 0-1.673-.11-2.134a4 4 0 0 0-2.956-2.955C16.474 4 15.916 4 14.8 4H9.2c-1.116 0-1.673 0-2.134.11a4 4 0 0 0-2.955 2.956C4 7.526 4 8.084 4 9.2Z";
+    
+    // 检查页面中所有SVG路径是否匹配这个矩形
+    const allPaths = document.querySelectorAll('path');
+    allPaths.forEach(path => {
+        const currentPath = path.getAttribute('d');
+        if (currentPath === rectanglePath) {
+            console.log('找到目标矩形SVG');
+            path.parentElement.parentElement.style.outline = '2px solid blue';
+        }
+    });
+}
+
+// 运行检查
+checkSpecificRectangle();
+```
+
+

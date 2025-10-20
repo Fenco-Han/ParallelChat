@@ -7,6 +7,7 @@ import { buildScript as buildClaude, buildStatusScript as statusClaude } from '.
 import { buildScript as buildDoubao, buildStatusScript as statusDoubao } from './doubao';
 import { buildScript as buildYuanbao, buildStatusScript as statusYuanbao } from './yuanbao';
 import { buildScript as buildGlm, buildStatusScript as statusGlm } from './glm';
+import { buildScript as buildGrok, buildStatusScript as statusGrok } from './grok';
 
 const handlers: Record<string, (text: string) => string> = {
   gemini: buildGemini,
@@ -18,6 +19,7 @@ const handlers: Record<string, (text: string) => string> = {
   doubao: buildDoubao,
   yuanbao: buildYuanbao,
   glm: buildGlm,
+  grok: buildGrok,
 };
 
 export function getInjectionScript(id: string, text: string): string {
@@ -35,6 +37,7 @@ const statusHandlers: Record<string, () => string> = {
   doubao: statusDoubao,
   yuanbao: statusYuanbao,
   glm: statusGlm,
+  grok: statusGrok,
 };
 
 export function getStatusCheckScript(id: string): string {
