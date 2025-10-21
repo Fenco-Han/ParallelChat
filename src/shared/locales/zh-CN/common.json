@@ -33,7 +33,7 @@
     "welcome": "欢迎使用并行聊天"
   },
   "sidebar": {
-    "history": "会话历史",
+    "history": "历史",
     "newSession": "新会话",
     "noSessions": "暂无会话记录",
     "noSessionsTip": "开始对话后会自动创建会话",
@@ -42,6 +42,8 @@
     "editTitle": "编辑标题",
     "deleteSession": "删除会话",
     "confirmDelete": "确定要删除这个会话吗？",
+    "clearAll": "清空全部",
+    "confirmClearAll": "确定要清空所有会话吗？此操作不可恢复。",
     "footerVersion": "版本 {{version}}",
     "updateAvailable": "发现新版本：{{version}}",
     "updating": "更新下载中...",

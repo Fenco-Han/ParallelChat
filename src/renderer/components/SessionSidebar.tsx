@@ -76,6 +76,16 @@ const GithubIcon = ({ size = 16 }: { size?: number }) => (
   </svg>
 );
 
+const TrashIcon = ({ size = 16 }: { size?: number }) => (
+  <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <path d="M3 6h18" />
+    <path d="M19 6v14c0 1-1 2-2 2H7c0-1-1-2-1-2V6" />
+    <path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2" />
+    <line x1="10" y1="11" x2="10" y2="17" />
+    <line x1="14" y1="11" x2="14" y2="17" />
+  </svg>
+);
+
 function SidebarUpdateFooter() {
   const { t } = useTranslation();
 
@@ -243,6 +253,18 @@ export default function SessionSidebar() {
     }
   };
 
+  const clearAll = async () => {
+    if (!hasSessions) return;
+    if (confirm(t('sidebar.confirmClearAll'))) {
+      try {
+        // 删除所有会话
+        for (const session of sessions) {
+          await window.parallelchat?.invoke('parallelchat/session/delete', session.id);
+        }
+      } catch {}
+    }
+  };
+
   const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
     if (e.key === 'Enter') {
       e.preventDefault();
@@ -261,15 +283,26 @@ export default function SessionSidebar() {
       <div className=" px-4 py-[10px] bg-white/90 backdrop-blur-sm flex items-center">
         <div className="flex items-center justify-between w-full">
           <h2 className="font-semibold text-slate-800">{t('sidebar.history')}</h2>
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={startNew}
-            className="h-8 px-3 text-xs font-medium bg-blue-50 border-blue-200 text-blue-700 hover:bg-blue-100 hover:border-blue-300"
-          >
-            <PlusIcon size={14} />
-            <span className="ml-1">{t('sidebar.newSession')}</span>
-          </Button>
+          <div className="flex items-center gap-2">
+            {hasSessions && (
+              <button
+                onClick={clearAll}
+                className="flex items-center justify-center w-8 h-8 rounded hover:bg-red-50 text-slate-500 hover:text-red-600 transition-colors"
+                title={t('sidebar.clearAll')}
+              >
+                <TrashIcon size={14} />
+              </button>
+            )}
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={startNew}
+              className="h-8 px-3 text-xs font-medium bg-blue-50 border-blue-200 text-blue-700 hover:bg-blue-100 hover:border-blue-300"
+            >
+              <PlusIcon size={14} />
+              <span className="ml-1">{t('sidebar.newSession')}</span>
+            </Button>
+          </div>
         </div>
       </div>
 
