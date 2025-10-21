@@ -49,3 +49,33 @@ export function buildStatusScript(): string {
     }
   })();`;
 }
+
+export function buildSendOnlyScript(): string {
+  return `(() => {
+    const btn =
+      document.querySelector('button[aria-label*="发送" i]')
+      || document.querySelector('button[aria-label*="send" i]')
+      || document.querySelector('.send-button.submit');
+    if (btn && typeof (btn as any).click === 'function') {
+      (btn as any).click();
+      return true;
+    }
+    const el =
+      document.querySelector('.ql-editor')
+      || document.querySelector('[contenteditable="true"][aria-label*="prompt" i]')
+      || document.querySelector('div[role="textbox"]')
+      || document.querySelector('textarea');
+    if (el) {
+      try {
+        el.dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter', bubbles: true, cancelable: true }));
+        return true;
+      } catch {}
+    }
+    const form = (el as any)?.closest?.('form') || document.querySelector('form');
+    if (form && typeof (form as any).requestSubmit === 'function') {
+      (form as any).requestSubmit();
+      return true;
+    }
+    return false;
+  })();`;
+}

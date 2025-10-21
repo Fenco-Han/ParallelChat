@@ -53,3 +53,46 @@ export function buildStatusScript(): string {
     }
   })();`;
 }
+
+export function buildSendOnlyScript(): string {
+  return `(() => {
+    try {
+      const input = document.querySelector('div[contenteditable="true"][id="prompt-textarea"]')
+        || document.querySelector('textarea[data-testid="prompt-textarea"]')
+        || document.querySelector('[contenteditable="true"]')
+        || document.querySelector('textarea');
+
+      const sendBtn = document.querySelector('#composer-submit-button')
+        || document.querySelector('button[aria-label*="Send" i]')
+        || document.querySelector('button[type="submit"]');
+      if (sendBtn && typeof (sendBtn as any).click === 'function') {
+        try { (sendBtn as any).click(); return true; } catch {}
+      }
+
+      if (input) {
+        try { (input as any).focus(); } catch {}
+        try {
+          const enterEvent = new KeyboardEvent('keydown', {
+            key: 'Enter',
+            code: 'Enter',
+            keyCode: 13,
+            which: 13,
+            bubbles: true,
+            cancelable: true,
+          });
+          (input as any).dispatchEvent(enterEvent);
+          return true;
+        } catch {}
+
+        const form = ((input as any).closest && (input as any).closest('form')) || (input as any).form;
+        if (form) {
+          try { if (typeof (form as any).requestSubmit === 'function') (form as any).requestSubmit(); return true; } catch {}
+          try { (form as any).dispatchEvent && (form as any).dispatchEvent(new Event('submit', { bubbles: true })); return true; } catch {}
+        }
+      }
+      return false;
+    } catch (_) {
+      return false;
+    }
+  })();`;
+}

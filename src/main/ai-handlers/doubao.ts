@@ -71,3 +71,37 @@ export function buildStatusScript(): string {
     }
   })();`;
 }
+
+export function buildSendOnlyScript(): string {
+  return `(() => {
+    try {
+      const textarea = document.querySelector('textarea[data-testid="chat_input_input"]')
+        || document.querySelector('textarea');
+
+      const sendBtn = document.querySelector('button[data-testid="chat_input_send_button"]');
+      const disabled = sendBtn && (sendBtn as any).disabled || (sendBtn && (sendBtn as any).getAttribute && (sendBtn as any).getAttribute('disabled'));
+      if (sendBtn && !disabled) {
+        try { (sendBtn as any).click?.(); return true; } catch {}
+      }
+
+      if (textarea) {
+        try { (textarea as any).focus?.(); } catch {}
+        try {
+          const enterEvent = new KeyboardEvent('keydown', {
+            key: 'Enter', code: 'Enter', keyCode: 13, which: 13,
+            bubbles: true, cancelable: true,
+          });
+          (textarea as any).dispatchEvent(enterEvent);
+          return true;
+        } catch {}
+
+        const form = ((textarea as any).closest && (textarea as any).closest('form')) || (textarea as any).form;
+        if (form) {
+          try { if (typeof (form as any).requestSubmit === 'function') (form as any).requestSubmit(); return true; } catch {}
+          try { (form as any).dispatchEvent && (form as any).dispatchEvent(new Event('submit', { bubbles: true })); return true; } catch {}
+        }
+      }
+      return false;
+    } catch (_) { return false; }
+  })();`;
+}

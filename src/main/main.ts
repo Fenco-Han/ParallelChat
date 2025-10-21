@@ -9,8 +9,8 @@
  * `./src/main.js` using webpack. This gives us some performance wins.
  */
 import path from 'path';
-import { app, BrowserWindow, shell, ipcMain, WebContentsView, session } from 'electron';
-import { getInjectionScript, getStatusCheckScript } from './ai-handlers/index';
+import { app, BrowserWindow, shell, ipcMain, WebContentsView, session, dialog } from 'electron';
+import { getInjectionScript, getStatusCheckScript, getSendOnlyScript } from './ai-handlers/index';
 import Store from 'electron-store';
 import { autoUpdater } from 'electron-updater';
 import log from 'electron-log';
@@ -20,6 +20,7 @@ import enCommon from '../shared/locales/en/common.json';
 import enMenu from '../shared/locales/en/menu.json';
 import zhCommon from '../shared/locales/zh-CN/common.json';
 import zhMenu from '../shared/locales/zh-CN/menu.json';
+import { promises as fs } from 'fs';
 
 class AppUpdater {
   constructor() {
@@ -376,6 +377,75 @@ ipcMain.handle('parallelchat/app/version', () => {
   }
 });
 
+ipcMain.handle('parallelchat/ai/status-check', async (_e, id: string) => {
+  const view = viewsRegistry.get(id);
+  if (!view) return { ok: false, reason: 'view-not-found', replying: false };
+
+  let primaryRes: any = undefined;
+  let replying = false;
+  try {
+    const script = getStatusCheckScript(id);
+    primaryRes = await view.webContents.executeJavaScript(script, true);
+    if (typeof primaryRes === 'boolean') {
+      replying = primaryRes;
+    } else {
+      replying = !!(primaryRes && (primaryRes.replying === true || primaryRes.isReplying === true || primaryRes.generating === true || primaryRes.busy === true));
+    }
+  } catch (err: any) {
+    replying = false;
+    primaryRes = { error: String(err?.message || err) };
+  }
+
+  if (replying) return { ok: true, replying, raw: primaryRes, source: 'provider' };
+
+  // 通用回退检测：尝试基于常见的“停止/取消/加载中”元素判断生成中状态
+  try {
+    const fallbackScript = `(() => {
+      function isVisible(el) {
+        if (!el) return false;
+        try {
+          const s = window.getComputedStyle(el);
+          if (!s) return false;
+          if (s.display === 'none' || s.visibility === 'hidden') return false;
+          const rect = el.getBoundingClientRect();
+          if ((rect?.width || 0) === 0 && (rect?.height || 0) === 0) return false;
+          return true;
+        } catch { return false; }
+      }
+      try {
+        const candidates = [
+          'button[aria-label*="Stop" i]',
+          'button[aria-label*="停止" i]',
+          'button[aria-label*="取消" i]',
+          'button[aria-label*="中止" i]',
+          'button[aria-label*="终止" i]',
+          'button[title*="Stop" i]',
+          'button[title*="停止" i]',
+          'button[title*="取消" i]'
+        ];
+        for (const sel of candidates) {
+          const el = document.querySelector(sel);
+          if (!el) continue;
+          const btn = el;
+          const disabled = (btn instanceof HTMLButtonElement && btn.disabled) || !!(btn as any)?.getAttribute?.('disabled');
+          if (isVisible(el) && !disabled) return true;
+        }
+        const spinnerSel = ['[role="progressbar"]','.loading','.spinner','.is-loading','svg[aria-busy="true"]'];
+        for (const sel of spinnerSel) {
+          const el = document.querySelector(sel);
+          if (el && isVisible(el)) return true;
+        }
+        return false;
+      } catch { return false; }
+    })();`;
+    const fallbackRes = await view.webContents.executeJavaScript(fallbackScript, true);
+    const fbReplying = !!fallbackRes;
+    return { ok: true, replying: fbReplying, raw: { primary: primaryRes, fallback: fallbackRes }, source: fbReplying ? 'fallback' : 'provider' };
+  } catch (err: any) {
+    return { ok: true, replying: false, raw: { primary: primaryRes }, source: 'provider', note: 'fallback-error' };
+  }
+});
+
 ipcMain.handle('parallelchat/update/check', async () => {
   try {
     const result = await autoUpdater.checkForUpdates();
@@ -546,6 +616,123 @@ ipcMain.handle(
     return { results, errors };
   },
 );
+
+// —— 文件上传 / 对话框 / 预览 IPC ——
+ipcMain.handle('parallelchat/view/upload-files', async (_e, payload: { id: string; selector?: string; filePaths: string[] }) => {
+  const { id, selector = '#filesUpload', filePaths } = payload || ({} as any);
+  if (!id || !Array.isArray(filePaths) || filePaths.length === 0) {
+    return { ok: false, reason: 'invalid-payload' };
+  }
+  const view = viewsRegistry.get(id);
+  if (!view) return { ok: false, reason: 'view-not-found' };
+
+  const dbg = view.webContents.debugger;
+  let attachedHere = false;
+  try {
+    if (!dbg.isAttached()) { dbg.attach('1.3'); attachedHere = true; }
+    // 获取目标 input 的 objectId
+    const evalRes: any = await dbg.sendCommand('Runtime.evaluate', {
+      expression: `document.querySelector(${JSON.stringify(selector)})`,
+      objectGroup: 'uploader',
+      includeCommandLineAPI: false,
+      silent: true,
+      returnByValue: false,
+      userGesture: true,
+    });
+    const objectId = evalRes?.result?.objectId;
+    if (!objectId) {
+      return { ok: false, reason: 'selector-not-found' };
+    }
+    // 设置文件到 input
+    await dbg.sendCommand('DOM.setFileInputFiles', {
+      objectId,
+      files: filePaths,
+    });
+
+    // 针对部分站点：避免重复触发站点的自动处理；其他仅派发一次 change
+    const SKIP_MANUAL_EVENTS = new Set(['kimi', 'doubao', 'chatgpt', 'grok', 'claude']);
+    if (!SKIP_MANUAL_EVENTS.has(id)) {
+      await view.webContents.executeJavaScript(`(function() {
+        const el = document.querySelector(${JSON.stringify(selector)});
+        if (!el) return false;
+        try {
+          el.dispatchEvent(new Event('change', { bubbles: true, cancelable: true }));
+        } catch {}
+        return true;
+      })();`, true);
+    } else {
+      try { log.info(`[parallelchat][upload-files][${id}] skip manual change to avoid duplicate processing`); } catch {}
+    }
+
+    return { ok: true };
+  } catch (err: any) {
+    return { ok: false, reason: String(err?.message || err) };
+  } finally {
+    try { if (attachedHere && dbg.isAttached()) dbg.detach(); } catch {}
+  }
+});
+
+ipcMain.handle('parallelchat/dialog/open', async (_e, payload: { mode?: 'image' | 'file'; multi?: boolean }) => {
+  const { mode = 'file', multi = true } = payload || ({} as any);
+  const filters = mode === 'image'
+    ? [{ name: 'Images', extensions: ['png','jpg','jpeg','webp','gif','bmp'] }]
+    : [{ name: 'All Files', extensions: ['*'] }];
+  const res = await dialog.showOpenDialog({
+    properties: multi ? ['openFile', 'multiSelections'] : ['openFile'],
+    filters,
+  });
+  return { canceled: res.canceled, filePaths: res.filePaths || [] };
+});
+
+function guessMime(filePath: string): string {
+  const ext = (path.extname(filePath) || '').toLowerCase();
+  const map: Record<string, string> = {
+    '.png': 'image/png', '.jpg': 'image/jpeg', '.jpeg': 'image/jpeg', '.webp': 'image/webp', '.gif': 'image/gif', '.bmp': 'image/bmp',
+    '.pdf': 'application/pdf', '.txt': 'text/plain', '.md': 'text/markdown', '.json': 'application/json', '.csv': 'text/csv',
+    '.doc': 'application/msword', '.docx': 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+    '.xls': 'application/vnd.ms-excel', '.xlsx': 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+    '.ppt': 'application/vnd.ms-powerpoint', '.pptx': 'application/vnd.openxmlformats-officedocument.presentationml.presentation',
+  };
+  return map[ext] || 'application/octet-stream';
+}
+
+ipcMain.handle('parallelchat/file/save-temp', async (_e, payload: { name: string; buffer: ArrayBuffer | Uint8Array }) => {
+  try {
+    const baseDir = path.join(app.getPath('temp'), 'ParallelChat', 'drops');
+    await fs.mkdir(baseDir, { recursive: true });
+    const safeName = path.basename(String(payload?.name || 'file'));
+    const filePath = path.join(baseDir, `${Date.now()}-${safeName}`);
+    const buf = Buffer.from(payload?.buffer as any);
+    await fs.writeFile(filePath, buf);
+    const mime = guessMime(filePath);
+    return { ok: true, filePath, mime };
+  } catch (err: any) {
+    return { ok: false, error: String(err?.message || err) };
+  }
+});
+
+ipcMain.handle('parallelchat/file/read-data-url', async (_e, filePath: string) => {
+  try {
+    const buf = await fs.readFile(filePath);
+    const b64 = buf.toString('base64');
+    const mime = guessMime(filePath);
+    return { ok: true, dataUrl: `data:${mime};base64,${b64}`, size: buf.length, mime };
+  } catch (err: any) {
+    return { ok: false, error: String(err?.message || err) };
+  }
+});
+
+ipcMain.handle('parallelchat/ai/send-only', async (_e, id: string) => {
+  const view = viewsRegistry.get(id);
+  if (!view) return { ok: false, reason: 'view-not-found' };
+  try {
+    const script = getSendOnlyScript(id);
+    const r = await view.webContents.executeJavaScript(script, true);
+    return { ok: !!r };
+  } catch (err: any) {
+    return { ok: false, reason: String(err?.message || err) };
+  }
+});
 
 /**
  * —— WebContentsView  创建与布局管理 ——

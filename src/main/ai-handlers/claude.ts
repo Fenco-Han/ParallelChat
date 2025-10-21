@@ -55,3 +55,37 @@ export function buildStatusScript(): string {
     }
   })();`;
 }
+
+export function buildSendOnlyScript(): string {
+  return `(() => {
+    const btn = document.querySelector('button[aria-label="Send message"]')
+      || document.querySelector('button[aria-label*="Send" i]');
+    if (btn && typeof (btn as any).click === 'function') {
+      (btn as any).click();
+      return true;
+    }
+    const editor =
+      document.querySelector('.ProseMirror[contenteditable="true"]')
+      || document.querySelector('[contenteditable="true"]')
+      || document.querySelector('div[role="textbox"]');
+    if (editor) {
+      try {
+        editor.dispatchEvent(new KeyboardEvent('keydown', {
+          key: 'Enter',
+          code: 'Enter',
+          keyCode: 13,
+          which: 13,
+          bubbles: true,
+          cancelable: true,
+        }));
+        return true;
+      } catch {}
+    }
+    const form = (editor as any)?.closest?.('form') || document.querySelector('form');
+    if (form && typeof (form as any).requestSubmit === 'function') {
+      (form as any).requestSubmit();
+      return true;
+    }
+    return false;
+  })();`;
+}

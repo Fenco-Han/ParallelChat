@@ -63,3 +63,32 @@ export function buildStatusScript(): string {
     }
   })();`;
 }
+
+export function buildSendOnlyScript(): string {
+  return `(() => {
+    try {
+      var btn = Array.prototype.slice.call(document.querySelectorAll('button')).find(function(b) {
+        var hasIcon = !!b.querySelector('svg');
+        var noText = !b.innerText || !b.innerText.trim();
+        var notToggle = !b.classList.contains('ds-toggle-button');
+        return notToggle && hasIcon && noText;
+      });
+      if (btn && typeof btn.click === 'function') { btn.click(); return true; }
+
+      var t = document.querySelector('textarea._27c9245')
+        || document.querySelector('textarea')
+        || document.querySelector('div[role="textbox"]')
+        || document.querySelector('[contenteditable="true"]');
+      if (t) {
+        t.dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter', bubbles: true, cancelable: true }));
+        var form = (t as any).form || (t.closest && t.closest('form'));
+        if (form) {
+          if (typeof form.requestSubmit === 'function') { form.requestSubmit(); }
+          else { form.dispatchEvent(new Event('submit', { bubbles: true, cancelable: true })); }
+        }
+        return true;
+      }
+      return false;
+    } catch (_) { return false; }
+  })();`;
+}

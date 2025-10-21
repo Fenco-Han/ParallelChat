@@ -15,7 +15,12 @@ export default function GlobalInputBar() {
   const [readyIds, setReadyIds] = useState<string[]>([]);
   const [activeSessionId, setActiveSessionId] = useState<string | undefined>(undefined);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
-const [collapsed, setCollapsed] = useState(false);
+  const [collapsed, setCollapsed] = useState(false);
+  const [isDragging, setIsDragging] = useState(false);
+
+  type Attachment = { id: string; filePath: string; mime: string; name: string; dataUrl?: string; kind: 'image' | 'file' };
+  const [attachments, setAttachments] = useState<Attachment[]>([]);
+  const [menuOpen, setMenuOpen] = useState(false);
 
   useEffect(() => {
     const el = textareaRef.current;
@@ -73,8 +78,8 @@ const [collapsed, setCollapsed] = useState(false);
       });
     });
     return () => {
-      off && off();
-    };
+    off && off();
+  };
   }, []);
 
   useEffect(() => {
@@ -117,7 +122,7 @@ const [collapsed, setCollapsed] = useState(false);
   const loadedSet = useMemo(() => new Set(readyIds), [readyIds]);
   const hasSelection = useMemo(() => Object.values(selected).some(Boolean), [selected]);
   const hasText = useMemo(() => text.trim().length > 0, [text]);
-  const canSend = useMemo(() => hasText && hasSelection && !loading, [hasText, hasSelection, loading]);
+  const canSend = useMemo(() => (hasText || attachments.length > 0) && hasSelection && !loading, [hasText, attachments.length, hasSelection, loading]);
 
   // 计算可用的提供商
   const availableProviders = useMemo(() => providers.filter(p => loadedSet.has(p.id)), [providers, loadedSet]);
@@ -187,29 +192,66 @@ const [collapsed, setCollapsed] = useState(false);
   const send = async () => {
     if (!canSend) return;
     const message = text.trim();
-    if (!message) return;
-    // 发送后立即清空输入框
-    setText('');
 
     const targets = providers.filter((p) => selected[p.id] && loadedSet.has(p.id)).map((p) => p.id);
+    if (targets.length === 0) return;
+
     setLoading(true);
-    try {
-      await window.parallelchat?.invoke('parallelchat/broadcast', { text: message, targets });
-    } catch {
-      setLoading(false);
+
+    // 1) 先上传附件并发送（无文本）
+    if (attachments.length > 0) {
+      try {
+        const SKIP_AUTOSEND_IDS = new Set(['kimi', 'claude', 'doubao', 'chatgpt', 'grok']);
+        for (const id of targets) {
+          const filePaths = attachments.map(a => a.filePath);
+          const up = await window.parallelchat?.invoke('parallelchat/view/upload-files', { id, selector: 'input[type="file"]', filePaths });
+          if ((up as any)?.ok) {
+              // 给页面一点时间识别附件并可能自动发送
+              await new Promise((r) => setTimeout(r, 400));
+              let generating = false;
+              if (SKIP_AUTOSEND_IDS.has(id)) {
+                // 已知站点在上传后会自动发送，避免手动二次触发
+                generating = true;
+              } else {
+                const maxChecks = 3;
+                const delayMs = 600;
+                for (let i = 0; i < maxChecks; i++) {
+                  try {
+                    const status = await window.parallelchat?.invoke('parallelchat/ai/status-check', id) as any;
+                    if (status && status.replying === true) { generating = true; break; }
+                  } catch {}
+                  await new Promise((r) => setTimeout(r, delayMs));
+                }
+              }
+              if (!generating) {
+                await window.parallelchat?.invoke('parallelchat/ai/send-only', id);
+              }
+            }
+        }
+        // 清空附件
+        setAttachments([]);
+      } catch {}
     }
+
+    // 2) 再发送文本
+    if (message) {
+      setText('');
+      try {
+        await window.parallelchat?.invoke('parallelchat/broadcast', { text: message, targets });
+      } catch {}
+    }
+
     // 首次发送：等待网站生成对话ID并创建会话（保留原消息用于标题）
     try {
       const currentActive = (await window.parallelchat?.invoke('parallelchat/store/get', 'activeSessionId')) as string | undefined;
       const sessions = (await window.parallelchat?.invoke('parallelchat/store/get', 'sessions')) as Array<{ id: string }> | undefined;
       const noSessions = !Array.isArray(sessions) || sessions.length === 0;
       const activeNotExists = !!currentActive && Array.isArray(sessions) && !sessions.some((s) => s.id === currentActive);
+      const baseTitle = message || (attachments.length > 0 ? (attachments[0]?.name || 'files') : '');
       if (!currentActive || noSessions || activeNotExists) {
-        // 等待网站生成对话ID
         await new Promise((resolve) => setTimeout(resolve, 5000));
         const states = (await window.parallelchat?.invoke('parallelchat/session/snapshot')) as Record<string, { url: string }>;
-        const t = message;
-        const title = t.length > 10 ? t.slice(0, 10) + '...' : t;
+        const title = baseTitle.length > 10 ? baseTitle.slice(0, 10) + '...' : baseTitle;
         await window.parallelchat?.invoke('parallelchat/session/create', { title, aiStates: states });
       }
     } catch {}
@@ -224,7 +266,7 @@ const [collapsed, setCollapsed] = useState(false);
       (typeof (e as any).keyCode === 'number' && (e as any).keyCode === 229) ||
       (typeof native?.keyCode === 'number' && native.keyCode === 229);
     if (composing) return;
-  
+
     if (e.key === 'Enter' && !e.shiftKey) {
       e.preventDefault();
       send();
@@ -260,13 +302,142 @@ const [collapsed, setCollapsed] = useState(false);
     </svg>
   );
 
+  // 新增：添加按钮图标
+  const AddIcon = () => (
+    <svg width="20" height="20" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg">
+      <path d="M10 4v12M4 10h12" stroke="currentColor" strokeWidth="2" fill="none" strokeLinecap="round" />
+    </svg>
+  );
+
+  // 移动到组件内部的附件相关函数
+  const removeAttachment = (id: string) => {
+    setAttachments((prev) => prev.filter(a => a.id !== id));
+  };
+
+  const addFiles = async (filePaths: string[], kind: 'image' | 'file') => {
+    const next: Attachment[] = [];
+    for (const fp of filePaths) {
+      const name = fp.split(/[/\\]/).pop() || 'file';
+      if (kind === 'image') {
+        const res = await window.parallelchat?.invoke('parallelchat/file/read-data-url', fp) as any;
+        next.push({ id: `${Date.now()}-${Math.random().toString(36).slice(2)}`, filePath: fp, mime: res?.mime || 'image/*', name, dataUrl: res?.dataUrl, kind });
+      } else {
+        next.push({ id: `${Date.now()}-${Math.random().toString(36).slice(2)}`, filePath: fp, mime: 'application/octet-stream', name, kind });
+      }
+    }
+    setAttachments(prev => [...prev, ...next]);
+  };
+
+  // 统一的文件选择对话框：点击添加后直接打开
+  const openSelectDialog = async () => {
+    const r = await window.parallelchat?.invoke('parallelchat/dialog/open', { mode: 'file', multi: true }) as any;
+    if (r && !r.canceled && Array.isArray(r.filePaths)) {
+      const exts = new Set(['.png', '.jpg', '.jpeg', '.gif', '.webp', '.bmp', '.svg', '.heic']);
+      const toExt = (p: string) => {
+        const dot = p.lastIndexOf('.');
+        return dot >= 0 ? p.slice(dot).toLowerCase() : '';
+      };
+      const images = r.filePaths.filter((p: string) => exts.has(toExt(p)));
+      const others = r.filePaths.filter((p: string) => !exts.has(toExt(p)));
+      if (images.length) await addFiles(images, 'image');
+      if (others.length) await addFiles(others, 'file');
+    }
+  };
+  const openImageDialog = async () => {
+    const r = await window.parallelchat?.invoke('parallelchat/dialog/open', { mode: 'image', multi: true }) as any;
+    if (r && !r.canceled && Array.isArray(r.filePaths)) {
+      await addFiles(r.filePaths, 'image');
+    }
+    setMenuOpen(false);
+  };
+  const openFileDialog = async () => {
+    const r = await window.parallelchat?.invoke('parallelchat/dialog/open', { mode: 'file', multi: true }) as any;
+    if (r && !r.canceled && Array.isArray(r.filePaths)) {
+      await addFiles(r.filePaths, 'file');
+    }
+    setMenuOpen(false);
+  };
+
+  // 拖拽上传事件处理
+  const handleDragOver = (e: React.DragEvent<HTMLDivElement>) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsDragging(true);
+  };
+  const handleDragEnter = (e: React.DragEvent<HTMLDivElement>) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsDragging(true);
+  };
+  const handleDragLeave = (e: React.DragEvent<HTMLDivElement>) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsDragging(false);
+  };
+  const handleDrop = async (e: React.DragEvent<HTMLDivElement>) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsDragging(false);
+    const files = Array.from(e.dataTransfer?.files ?? []);
+    if (!files.length) return;
+
+    const exts = new Set(['.png', '.jpg', '.jpeg', '.gif', '.webp', '.bmp', '.svg', '.heic']);
+    const toExt = (p: string) => {
+      const dot = p.lastIndexOf('.');
+      return dot >= 0 ? p.slice(dot).toLowerCase() : '';
+    };
+
+    const paths: string[] = [];
+    for (const f of files) {
+      const p = (f as any)?.path as string | undefined;
+      if (p && typeof p === 'string' && p.length > 0) {
+        paths.push(p);
+      } else {
+        try {
+          const buf = await (f as any).arrayBuffer();
+          const res = (await window.parallelchat?.invoke('parallelchat/file/save-temp', { name: f.name, buffer: buf })) as any;
+          if (res?.ok && typeof res?.filePath === 'string') paths.push(res.filePath);
+        } catch {}
+      }
+    }
+
+    if (!paths.length) return;
+    const images = paths.filter((p) => exts.has(toExt(p)));
+    const others = paths.filter((p) => !exts.has(toExt(p)));
+    if (images.length) await addFiles(images, 'image');
+    if (others.length) await addFiles(others, 'file');
+  };
+
   return (
     <div className="p-2">
       {/* 统一的输入框容器 */}
-      <div className="relative border border-gray-200 rounded-lg bg-white shadow-sm hover:shadow-md transition-shadow duration-200">
+      <div
+          className={`relative border ${isDragging ? 'border-blue-400 ring-2 ring-blue-200' : 'border-gray-200'} rounded-lg bg-white shadow-sm hover:shadow-md transition-shadow duration-200`}
+          onDragEnter={handleDragEnter}
+          onDragOver={handleDragOver}
+          onDragLeave={handleDragLeave}
+          onDrop={handleDrop}
+        >
         {/* 输入区域 */}
         {!collapsed && (
           <div className="p-3">
+            {/* 附件预览区 */}
+            {attachments.length > 0 && (
+              <div className="mb-2 flex flex-wrap gap-2">
+                {attachments.map(att => (
+                  <div key={att.id} className="relative border rounded-md p-2 flex items-center gap-2 bg-gray-50">
+                    {att.kind === 'image' && att.dataUrl ? (
+                      <img src={att.dataUrl} alt={att.name} className="w-12 h-12 object-cover rounded-sm" />
+                    ) : (
+                      <div className="w-12 h-12 bg-gray-200 rounded-sm flex items-center justify-center text-gray-600 text-xs">FILE</div>
+                    )}
+                    <div className="max-w-[200px] truncate text-sm">{att.name}</div>
+                    <button className="absolute -top-2 -right-2 w-6 h-6 rounded-full bg-gray-200 hover:bg-gray-300 text-gray-700 flex items-center justify-center" onClick={() => removeAttachment(att.id)} aria-label="移除附件">×</button>
+                  </div>
+                ))}
+              </div>
+            )}
+
             <Textarea
               ref={textareaRef}
               placeholder={t('input.hint')}
@@ -287,6 +458,21 @@ const [collapsed, setCollapsed] = useState(false);
           <div className="flex items-center gap-3 flex-1">
             {availableProviders.length > 0 && (
               <>
+                {/* 添加按钮（在全选左侧） */}
+                <div className="relative">
+                  <button
+                    type="button"
+                    onClick={openSelectDialog}
+                    className="w-8 h-8 rounded-full flex items-center justify-center transition-all duration-200 bg-gray-100 hover:bg-gray-200 text-gray-700"
+                    aria-label="添加附件"
+                  >
+                    <AddIcon />
+                  </button>
+                </div>
+
+                {/* 分隔线 */}
+                <div className="w-px h-4 bg-gray-300"></div>
+
                 {/* 全选按钮 */}
                 <Label className="inline-flex items-center gap-2 text-sm font-medium cursor-pointer">
                   <Checkbox
@@ -295,9 +481,6 @@ const [collapsed, setCollapsed] = useState(false);
                    />
                   <span>{t('input.selectAll')}</span>
                 </Label>
-
-                {/* 分隔线 */}
-                <div className="w-px h-4 bg-gray-300"></div>
               </>
             )}
 

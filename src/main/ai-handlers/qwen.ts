@@ -59,3 +59,31 @@ export function buildStatusScript(): string {
     }
   })();`;
 }
+
+export function buildSendOnlyScript(): string {
+  return `(() => {
+    try {
+      const sendBtn = document.querySelector('button[type="submit"]')
+        || document.querySelector('button[aria-label*="发送" i]')
+        || document.querySelector('button[title*="发送" i]')
+        || document.querySelector('button:has(svg)');
+      if (sendBtn && !sendBtn.disabled) {
+        sendBtn.click();
+        return true;
+      }
+      // 退化到模拟 Enter
+      const t = document.querySelector('textarea#chat-input') || document.querySelector('textarea');
+      if (t) {
+        const enterEvent = new KeyboardEvent('keydown', {
+          key: 'Enter', code: 'Enter', keyCode: 13, which: 13,
+          bubbles: true, cancelable: true
+        });
+        t.dispatchEvent(enterEvent);
+        return true;
+      }
+      return false;
+    } catch (_) {
+      return false;
+    }
+  })();`;
+}

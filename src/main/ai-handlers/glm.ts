@@ -55,3 +55,39 @@ export function buildStatusScript(): string {
     }
   })();`;
 }
+
+export function buildSendOnlyScript(): string {
+  return `(() => {
+    try {
+      const textarea = document.querySelector('textarea.scroll-display-none')
+        || document.querySelector('textarea');
+
+      const sendBtn = document.querySelector('.enter.is-main-chat')
+        || document.querySelector('.enter-icon-container');
+      if (sendBtn && typeof sendBtn.click === 'function') {
+        try { sendBtn.click(); } catch {}
+      }
+
+      if (textarea) {
+        try { textarea.focus(); } catch {}
+        try {
+          const enterEvent = new KeyboardEvent('keydown', {
+            key: 'Enter',
+            code: 'Enter',
+            keyCode: 13,
+            which: 13,
+            bubbles: true,
+            cancelable: true,
+          });
+          textarea.dispatchEvent(enterEvent);
+        } catch {}
+
+        const form = (textarea.closest && textarea.closest('form')) || textarea.form;
+        if (form) {
+          try { if (typeof form.requestSubmit === 'function') form.requestSubmit(); } catch {}
+          try { form.dispatchEvent && form.dispatchEvent(new Event('submit', { bubbles: true })); } catch {}
+        }
+      }
+    } catch (_) {}
+  })();`;
+}
