@@ -15,6 +15,7 @@ export default function GlobalInputBar() {
   const [readyIds, setReadyIds] = useState<string[]>([]);
   const [activeSessionId, setActiveSessionId] = useState<string | undefined>(undefined);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
+const [collapsed, setCollapsed] = useState(false);
 
   useEffect(() => {
     const el = textareaRef.current;
@@ -249,28 +250,39 @@ export default function GlobalInputBar() {
       <rect x="3" y="3" width="14" height="14" rx="2" fill="currentColor" />
     </svg>
   );
+  const CollapseIcon = ({ collapsed }: { collapsed: boolean }) => (
+    <svg width="20" height="20" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg">
+      {collapsed ? (
+        <path d="M5 12l5-5 5 5" stroke="currentColor" strokeWidth="2" fill="none" strokeLinecap="round" strokeLinejoin="round" />
+      ) : (
+        <path d="M5 8l5 5 5-5" stroke="currentColor" strokeWidth="2" fill="none" strokeLinecap="round" strokeLinejoin="round" />
+      )}
+    </svg>
+  );
 
   return (
     <div className="p-2">
       {/* 统一的输入框容器 */}
       <div className="relative border border-gray-200 rounded-lg bg-white shadow-sm hover:shadow-md transition-shadow duration-200">
         {/* 输入区域 */}
-        <div className="p-3">
-          <Textarea
-            ref={textareaRef}
-            placeholder={t('input.hint')}
-            value={text}
-            onChange={(e) => setText(e.target.value)}
-            onCompositionStart={() => setIsComposing(true)}
-            onCompositionEnd={() => setIsComposing(false)}
-            onKeyDown={onKeyDown}
-            className="min-h-[40px] max-h-[100px] border-0 resize-none overflow-y-auto focus:ring-0 focus:outline-none p-0 text-base"
-            style={{ boxShadow: 'none' }}
-          />
-        </div>
+        {!collapsed && (
+          <div className="p-3">
+            <Textarea
+              ref={textareaRef}
+              placeholder={t('input.hint')}
+              value={text}
+              onChange={(e) => setText(e.target.value)}
+              onCompositionStart={() => setIsComposing(true)}
+              onCompositionEnd={() => setIsComposing(false)}
+              onKeyDown={onKeyDown}
+              className="min-h-[40px] max-h-[100px] border-0 resize-none overflow-y-auto focus:ring-0 focus:outline-none p-0 text-base"
+              style={{ boxShadow: 'none' }}
+            />
+          </div>
+        )}
 
         {/* 底部控制区域 */}
-        <div className="flex items-center justify-between px-3 pb-3 pt-1 border-t border-gray-100">
+        <div className="flex items-center justify-between px-2 py-1 border-t border-gray-100">
           {/* 模型选择区域 */}
           <div className="flex items-center gap-3 flex-1">
             {availableProviders.length > 0 && (
@@ -317,6 +329,14 @@ export default function GlobalInputBar() {
           </div>
 
           {/* 圆形发送按钮 */}
+          <button
+            type="button"
+            onClick={() => setCollapsed((v) => !v)}
+            className="w-8 h-8 rounded-full flex items-center justify-center transition-all duration-200 bg-gray-100 hover:bg-gray-200 text-gray-700"
+            aria-label="折叠输入框"
+          >
+            <CollapseIcon collapsed={collapsed} />
+          </button>
           <button
             type="button"
             onClick={send}
