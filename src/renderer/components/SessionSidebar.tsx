@@ -297,10 +297,10 @@ export default function SessionSidebar() {
               variant="outline"
               size="sm"
               onClick={startNew}
-              className="h-8 px-3 text-xs font-medium bg-blue-50 border-blue-200 text-blue-700 hover:bg-blue-100 hover:border-blue-300"
+              className="h-8 px-2 text-xs tracking-tight font-medium bg-blue-50 border-blue-200 text-blue-700 hover:bg-blue-100 hover:border-blue-300"
             >
-              <PlusIcon size={14} />
-              <span className="ml-1">{t('sidebar.newSession')}</span>
+
+              <span className="ml-0.5">{t('sidebar.newSession')}</span>
             </Button>
           </div>
         </div>
