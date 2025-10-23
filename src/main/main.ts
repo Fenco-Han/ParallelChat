@@ -10,7 +10,7 @@
  */
 import path from 'path';
 import { app, BrowserWindow, shell, ipcMain, WebContentsView, session, dialog } from 'electron';
-import { getInjectionScript, getStatusCheckScript, getSendOnlyScript } from './ai-handlers/index';
+import { getInjectionScript, getStatusCheckScript, getUploadCheckScript } from './ai-handlers/index';
 import Store from 'electron-store';
 import { autoUpdater } from 'electron-updater';
 import log from 'electron-log';
@@ -446,6 +446,23 @@ ipcMain.handle('parallelchat/ai/status-check', async (_e, id: string) => {
   }
 });
 
+// 新增：上传忙碌检测
+ipcMain.handle('parallelchat/ai/uploading-check', async (_e, id: string) => {
+  const view = viewsRegistry.get(id);
+  if (!view) return { ok: false, reason: 'view-not-found', uploading: false };
+  let primaryRes: any = undefined;
+  let uploading = false;
+  try {
+    const script = getUploadCheckScript(id);
+    primaryRes = await view.webContents.executeJavaScript(script, true);
+    uploading = !!primaryRes;
+  } catch (err: any) {
+    uploading = false;
+    primaryRes = { error: String(err?.message || err) };
+  }
+  return { ok: true, uploading, raw: primaryRes };
+});
+
 ipcMain.handle('parallelchat/update/check', async () => {
   try {
     const result = await autoUpdater.checkForUpdates();
@@ -722,17 +739,7 @@ ipcMain.handle('parallelchat/file/read-data-url', async (_e, filePath: string) =
   }
 });
 
-ipcMain.handle('parallelchat/ai/send-only', async (_e, id: string) => {
-  const view = viewsRegistry.get(id);
-  if (!view) return { ok: false, reason: 'view-not-found' };
-  try {
-    const script = getSendOnlyScript(id);
-    const r = await view.webContents.executeJavaScript(script, true);
-    return { ok: !!r };
-  } catch (err: any) {
-    return { ok: false, reason: String(err?.message || err) };
-  }
-});
+
 
 /**
  * —— WebContentsView  创建与布局管理 ——

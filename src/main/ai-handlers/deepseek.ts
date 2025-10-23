@@ -6,42 +6,45 @@ export function buildScript(text: string): string {
       || document.querySelector('div[role="textbox"]')
       || document.querySelector('[contenteditable="true"]');
     if (!t) return console.error('未找到输入框');
-    var msg = ${msg};
+
+    var text = ${msg};
+
     if (t.tagName && t.tagName.toLowerCase() === 'textarea') {
       try {
         var desc = Object.getOwnPropertyDescriptor(HTMLTextAreaElement.prototype, 'value');
-        if (desc && typeof desc.set === 'function') desc.set.call(t, msg); else t.value = msg;
+        if (desc && typeof desc.set === 'function') desc.set.call(t, text); else t.value = text;
       } catch (_) {
-        t.value = msg;
+        t.value = text;
       }
-      t.dispatchEvent(new Event('input', { bubbles: true }));
+      try { t.dispatchEvent(new Event('input', { bubbles: true })); } catch {}
     } else {
-      if (t && typeof t.focus === 'function') t.focus();
+      try { t.focus && t.focus(); } catch {}
       try {
         var sel = window.getSelection();
         var range = document.createRange();
         range.selectNodeContents(t);
-        range.collapse(false);
-        sel.removeAllRanges();
-        sel.addRange(range);
-        document.execCommand('insertText', false, msg);
+        sel && sel.removeAllRanges();
+        sel && sel.addRange(range);
+        document.execCommand('delete', false, null);
+        document.execCommand('insertText', false, text);
       } catch (_) {
-        if ('innerText' in t) t.innerText = msg; else t.textContent = msg;
+        if ('innerText' in t) t.innerText = text; else t.textContent = text;
       }
+      try { t.dispatchEvent(new Event('input', { bubbles: true })); } catch {}
     }
+
     setTimeout(function() {
-      t.dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter', bubbles: true, cancelable: true }));
-      var sendBtn = Array.prototype.slice.call(document.querySelectorAll('button')).find(function(btn) {
-        var hasIcon = !!btn.querySelector('svg');
-        var noText = !btn.innerText || !btn.innerText.trim();
-        var notToggle = !btn.classList.contains('ds-toggle-button');
-        return notToggle && hasIcon && noText;
-      });
-      if (sendBtn && typeof sendBtn.click === 'function') sendBtn.click();
-      var form = t.form || (t.closest && t.closest('form'));
-      if (form) {
-        if (typeof form.requestSubmit === 'function') { form.requestSubmit(); }
-        else { form.dispatchEvent(new Event('submit', { bubbles: true, cancelable: true })); }
+      try {
+        t.dispatchEvent(new KeyboardEvent('keydown', {
+          key: 'Enter',
+          code: 'Enter',
+          keyCode: 13,
+          which: 13,
+          bubbles: true,
+          cancelable: true,
+        }));
+      } catch (e) {
+        console.error('模拟回车失败:', e);
       }
     }, 100);
   })();`;
@@ -50,45 +53,40 @@ export function buildScript(text: string): string {
 export function buildStatusScript(): string {
   return `(() => {
     try {
-      const rectanglePath = "M2 4.88006C2 3.68015 2 3.08019 2.30557 2.6596C2.40426 2.52377 2.52371 2.40432 2.65954 2.30563C3.08013 2.00006 3.68009 2.00006 4.88 2.00006H11.12C12.3199 2.00006 12.9199 2.00006 13.3405 2.30563C13.4763 2.40432 13.5957 2.52377 13.6944 2.6596C14 3.08019 14 3.68015 14 4.88006V11.1201C14 12.32 14 12.9199 13.6944 13.3405C13.5957 13.4763 13.4763 13.5958 13.3405 13.6945C12.9199 14.0001 12.3199 14.0001 11.12 14.0001H4.88C3.68009 14.0001 3.08013 14.0001 2.65954 13.6945C2.52371 13.5958 2.40426 13.4763 2.30557 13.3405C2 12.9199 2 12.32 2 11.1201V4.88006Z";
-      const allPaths = document.querySelectorAll('path');
-      for (const path of Array.from(allPaths)) {
-        if (path.getAttribute('d') === rectanglePath) {
-          return true;
-        }
+      // 优先靠 aria-label，其次靠 ds-icon-button role=button
+      let btn = document.querySelector('[aria-label="Stop response"]')
+        || document.querySelector('[aria-label*="Stop" i]')
+        || document.querySelector('.ds-icon-button[role="button"][aria-disabled]');
+
+      // 若找到输入框，则在同容器中进一步限定查找范围
+      const root = document.querySelector('textarea._27c9245')
+        || document.querySelector('textarea')
+        || document.querySelector('div[role="textbox"]')
+        || document.querySelector('[contenteditable="true"]');
+      const container = (root && (root.closest && root.closest('form'))) || (root && root.parentElement);
+      if (!btn && container) {
+        btn = container.querySelector('.ds-icon-button[role="button"][aria-disabled]');
       }
-      return false;
+
+      if (!btn) return false;
+      const disabled = btn.getAttribute('aria-disabled') === 'true' || btn.hasAttribute('disabled');
+      const style = window.getComputedStyle(btn as Element);
+      const hidden = style.display === 'none' || style.visibility === 'hidden' || ((btn as HTMLElement).offsetParent === null);
+      return !disabled && !hidden;
     } catch (_) {
       return false;
     }
   })();`;
 }
 
-export function buildSendOnlyScript(): string {
+export function buildUploadCheckScript(): string {
   return `(() => {
     try {
-      var btn = Array.prototype.slice.call(document.querySelectorAll('button')).find(function(b) {
-        var hasIcon = !!b.querySelector('svg');
-        var noText = !b.innerText || !b.innerText.trim();
-        var notToggle = !b.classList.contains('ds-toggle-button');
-        return notToggle && hasIcon && noText;
-      });
-      if (btn && typeof btn.click === 'function') { btn.click(); return true; }
-
-      var t = document.querySelector('textarea._27c9245')
-        || document.querySelector('textarea')
-        || document.querySelector('div[role="textbox"]')
-        || document.querySelector('[contenteditable="true"]');
-      if (t) {
-        t.dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter', bubbles: true, cancelable: true }));
-        var form = (t as any).form || (t.closest && t.closest('form'));
-        if (form) {
-          if (typeof form.requestSubmit === 'function') { form.requestSubmit(); }
-          else { form.dispatchEvent(new Event('submit', { bubbles: true, cancelable: true })); }
-        }
-        return true;
-      }
+      // 简单：存在被禁用的 ds 图标按钮即视为上传/准备中
+      const btn = document.querySelector('.ds-icon-button[role="button"][aria-disabled="true"]');
+      return !!btn;
+    } catch (_) {
       return false;
-    } catch (_) { return false; }
+    }
   })();`;
 }

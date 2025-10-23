@@ -82,37 +82,22 @@ export function buildStatusScript(): string {
   })();`;
 }
 
-export function buildSendOnlyScript(): string {
+export function buildUploadCheckScript(): string {
   return `(() => {
-    function tryClickSend() {
-      const btn = document.querySelector('button[type="submit"][aria-label="提交"]')
-        || document.querySelector('button[type="submit"][aria-label*="提交" i]')
-        || document.querySelector('button[aria-label*="提交" i]');
-      if (btn && typeof (btn as any).click === 'function') { (btn as any).click(); return true; }
+    try {
+      const isVisible = (el) => {
+        if (!el) return false;
+        const s = window.getComputedStyle(el);
+        if (s.display === 'none' || s.visibility === 'hidden') return false;
+        return !(el instanceof HTMLElement) || el.offsetParent !== null;
+      };
+
+      const voiceBtn = document.querySelector('button[aria-label="进入语音模式"]');
+      const disabledSendBtn = document.querySelector('button[type="submit"][aria-label="提交"][disabled], button[type="submit"][aria-label="提交"][aria-disabled="true"]');
+
+      return isVisible(voiceBtn) || isVisible(disabledSendBtn);
+    } catch (_) {
       return false;
     }
-    if (tryClickSend()) return true;
-
-    const textarea = document.querySelector('textarea[aria-label="向 Grok 提任何问题"]')
-      || document.querySelector('textarea')
-      || document.querySelector('div[role="textbox"]')
-      || document.querySelector('[contenteditable="true"]');
-    if (textarea) {
-      try {
-        textarea.dispatchEvent(new KeyboardEvent('keydown', {
-          key: 'Enter', code: 'Enter', keyCode: 13, which: 13,
-          bubbles: true, cancelable: true,
-        }));
-        return true;
-      } catch {}
-    }
-
-    const form = (textarea as any)?.closest?.('form') || document.querySelector('form');
-    if (form && typeof (form as any).requestSubmit === 'function') {
-      (form as any).requestSubmit();
-      return true;
-    }
-
-    return false;
   })();`;
 }

@@ -122,7 +122,7 @@ export default function GlobalInputBar() {
   const loadedSet = useMemo(() => new Set(readyIds), [readyIds]);
   const hasSelection = useMemo(() => Object.values(selected).some(Boolean), [selected]);
   const hasText = useMemo(() => text.trim().length > 0, [text]);
-  const canSend = useMemo(() => (hasText || attachments.length > 0) && hasSelection && !loading, [hasText, attachments.length, hasSelection, loading]);
+  const canSend = useMemo(() => hasText && hasSelection && !loading, [hasText, hasSelection, loading]);
 
   // 计算可用的提供商
   const availableProviders = useMemo(() => providers.filter(p => loadedSet.has(p.id)), [providers, loadedSet]);
@@ -198,35 +198,25 @@ export default function GlobalInputBar() {
 
     setLoading(true);
 
-    // 1) 先上传附件并发送（无文本）
+    // 1) 仅上传附件（默认有文本，上传后等待站点就绪再统一 broadcast）
     if (attachments.length > 0) {
       try {
-        const SKIP_AUTOSEND_IDS = new Set(['kimi', 'claude', 'doubao', 'chatgpt', 'grok']);
+        const waitForUploadIdle = async (id: string, timeoutMs = 20000, intervalMs = 500) => {
+          const start = Date.now();
+          while (Date.now() - start < timeoutMs) {
+            let uploading = false;
+            try {
+              const res = await window.parallelchat?.invoke('parallelchat/ai/uploading-check', id) as any;
+              uploading = !!(res && (res.uploading === true));
+            } catch {}
+            if (!uploading) break;
+            await new Promise((r) => setTimeout(r, intervalMs));
+          }
+        };
         for (const id of targets) {
           const filePaths = attachments.map(a => a.filePath);
-          const up = await window.parallelchat?.invoke('parallelchat/view/upload-files', { id, selector: 'input[type="file"]', filePaths });
-          if ((up as any)?.ok) {
-              // 给页面一点时间识别附件并可能自动发送
-              await new Promise((r) => setTimeout(r, 400));
-              let generating = false;
-              if (SKIP_AUTOSEND_IDS.has(id)) {
-                // 已知站点在上传后会自动发送，避免手动二次触发
-                generating = true;
-              } else {
-                const maxChecks = 3;
-                const delayMs = 600;
-                for (let i = 0; i < maxChecks; i++) {
-                  try {
-                    const status = await window.parallelchat?.invoke('parallelchat/ai/status-check', id) as any;
-                    if (status && status.replying === true) { generating = true; break; }
-                  } catch {}
-                  await new Promise((r) => setTimeout(r, delayMs));
-                }
-              }
-              if (!generating) {
-                await window.parallelchat?.invoke('parallelchat/ai/send-only', id);
-              }
-            }
+          await window.parallelchat?.invoke('parallelchat/view/upload-files', { id, selector: 'input[type="file"]', filePaths });
+          await waitForUploadIdle(id, 18000, 600);
         }
         // 清空附件
         setAttachments([]);

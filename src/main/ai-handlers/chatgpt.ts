@@ -1,96 +1,74 @@
 export function buildScript(text: string): string {
   const msg = JSON.stringify(text ?? '');
   return `(() => {
-    const input = document.querySelector('div[contenteditable="true"][id="prompt-textarea"]')
-      || document.querySelector('textarea[data-testid="prompt-textarea"]')
-      || document.querySelector('[contenteditable="true"]')
-      || document.querySelector('textarea');
+    // 1. 查找输入框
+    const input = document.querySelector('#prompt-textarea');
     if (!input) return console.warn('❌ 未找到输入框');
 
+    // 2. 设置要发送的固定文本
     const text = ${msg};
+
+    // 3. 填充内容
     try { input.focus(); } catch {}
     try {
       document.execCommand('selectAll', false, null);
       document.execCommand('delete', false, null);
       document.execCommand('insertText', false, text);
     } catch {}
+    // 触发 input 事件，通知框架内容已更改
     try { input.dispatchEvent(new Event('input', { bubbles: true })); } catch {}
 
-    try {
-      const enterEvent = new KeyboardEvent('keydown', {
-        key: 'Enter',
-        code: 'Enter',
-        keyCode: 13,
-        which: 13,
-        bubbles: true,
-        cancelable: true,
-      });
-      input.dispatchEvent(enterEvent);
-    } catch {}
-
+    // 4. 【关键改动】等待 100 毫秒
+    //    给框架足够的时间来处理 input 事件并更新内部状态
     setTimeout(() => {
-      const sendBtn = document.querySelector('#composer-submit-button')
-        || document.querySelector('button[aria-label*="Send" i]')
-        || document.querySelector('button[type="submit"]');
-      if (sendBtn && typeof sendBtn.click === 'function') {
-        sendBtn.click();
+      // 5. 在状态更新后，再模拟按下回车键
+      try {
+        const enterEvent = new KeyboardEvent('keydown', {
+          key: 'Enter',
+          code: 'Enter',
+          keyCode: 13,
+          which: 13,
+          bubbles: true,
+          cancelable: true,
+        });
+        input.dispatchEvent(enterEvent);
+      } catch (e) {
+        console.error('模拟回车失败:', e);
       }
-    }, 100);
+    }, 100); // 100 毫秒的延迟
   })();`;
 }
 
 export function buildStatusScript(): string {
   return `(() => {
     try {
-      const rectanglePath = "M4.5 5.75C4.5 5.05964 5.05964 4.5 5.75 4.5H14.25C14.9404 4.5 15.5 5.05964 15.5 5.75V14.25C15.5 14.9404 14.9404 15.5 14.25 15.5H5.75C5.05964 15.5 4.5 14.9404 4.5 14.25V5.75Z";
-      const paths = document.querySelectorAll('path');
-      for (const p of Array.from(paths)) {
-        if (p.getAttribute('d') === rectanglePath) return true;
-      }
-      return false;
+      const btn = document.querySelector('[data-testid="stop-button"]');
+      if (!btn) return false;
+      const disabled = btn.hasAttribute('disabled') || btn.getAttribute('aria-disabled') === 'true';
+      const style = window.getComputedStyle(btn);
+      const hidden = style.display === 'none' || style.visibility === 'hidden' || (btn instanceof HTMLElement && btn.offsetParent === null);
+      return !disabled && !hidden;
     } catch (_) {
       return false;
     }
   })();`;
 }
 
-export function buildSendOnlyScript(): string {
+
+
+// 新增：上传忙碌检测脚本（ChatGPT）
+export function buildUploadCheckScript(): string {
   return `(() => {
     try {
-      const input = document.querySelector('div[contenteditable="true"][id="prompt-textarea"]')
-        || document.querySelector('textarea[data-testid="prompt-textarea"]')
-        || document.querySelector('[contenteditable="true"]')
-        || document.querySelector('textarea');
-
-      const sendBtn = document.querySelector('#composer-submit-button')
-        || document.querySelector('button[aria-label*="Send" i]')
-        || document.querySelector('button[type="submit"]');
-      if (sendBtn && typeof (sendBtn as any).click === 'function') {
-        try { (sendBtn as any).click(); return true; } catch {}
-      }
-
-      if (input) {
-        try { (input as any).focus(); } catch {}
-        try {
-          const enterEvent = new KeyboardEvent('keydown', {
-            key: 'Enter',
-            code: 'Enter',
-            keyCode: 13,
-            which: 13,
-            bubbles: true,
-            cancelable: true,
-          });
-          (input as any).dispatchEvent(enterEvent);
-          return true;
-        } catch {}
-
-        const form = ((input as any).closest && (input as any).closest('form')) || (input as any).form;
-        if (form) {
-          try { if (typeof (form as any).requestSubmit === 'function') (form as any).requestSubmit(); return true; } catch {}
-          try { (form as any).dispatchEvent && (form as any).dispatchEvent(new Event('submit', { bubbles: true })); return true; } catch {}
-        }
-      }
-      return false;
+      // 发送按钮处于禁用，或存在加载标记，则视为上传/准备中
+      const disabledButton = document.querySelector('#composer-submit-button[disabled]');
+      if (disabledButton) return true;
+      const ariaDisabled = document.querySelector('#composer-submit-button[aria-disabled="true"]');
+      if (ariaDisabled) return true;
+      const spinner = document.querySelector('[data-testid="loading-spinner"]')
+        || document.querySelector('svg[aria-busy="true"]')
+        || document.querySelector('[role="progressbar"]');
+      return !!spinner;
     } catch (_) {
       return false;
     }

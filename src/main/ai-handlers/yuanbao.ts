@@ -54,30 +54,18 @@ export function buildStatusScript(): string {
 })();`;
 }
 
-export function buildSendOnlyScript(): string {
+export function buildUploadCheckScript(): string {
   return `(() => {
     try {
-      const editor = document.querySelector('.ql-editor[contenteditable="true"]')
-        || document.querySelector('[contenteditable="true"]')
-        || document.querySelector('textarea');
-
-      const sendBtn = document.querySelector('#yuanbao-send-btn:not(.style__send-btn--disabled___CGyAQ)');
-      if (sendBtn && typeof (sendBtn as any).click === 'function') {
-        try { (sendBtn as any).click(); return true; } catch {}
-      }
-
-      if (editor) {
-        try { (editor as any).focus?.(); } catch {}
-        try {
-          const enterEvent = new KeyboardEvent('keydown', {
-            key: 'Enter', code: 'Enter', keyCode: 13, which: 13,
-            bubbles: true, cancelable: true,
-          });
-          (editor as any).dispatchEvent(enterEvent);
-          return true;
-        } catch {}
-      }
+      const btn = document.querySelector('#yuanbao-send-btn');
+      if (!btn) return false;
+      const s = window.getComputedStyle(btn);
+      const hidden = s.display === 'none' || s.visibility === 'hidden';
+      const visible = !hidden && (btn instanceof HTMLElement ? btn.offsetParent !== null : true);
+      const disabled = btn.classList && btn.classList.contains('style__send-btn--disabled___CGyAQ');
+      return visible && disabled;
+    } catch (_) {
       return false;
-    } catch (_) { return false; }
+    }
   })();`;
 }

@@ -44,48 +44,37 @@ export function buildScript(text: string): string {
 export function buildStatusScript(): string {
   return `(() => {
     try {
-      const rectanglePath = "M128,20A108,108,0,1,0,236,128,108.12,108.12,0,0,0,128,20Zm0,192a84,84,0,1,1,84-84A84.09,84.09,0,0,1,128,212Zm40-112v56a12,12,0,0,1-12,12H100a12,12,0,0,1-12-12V100a12,12,0,0,1,12-12h56A12,12,0,0,1,168,100Z";
-      const paths = document.querySelectorAll('path');
-      for (const p of Array.from(paths)) {
-        if (p.getAttribute('d') === rectanglePath) return true;
-      }
-      return false;
+      const btn = document.querySelector('button[aria-label="Stop response"]')
+        || document.querySelector('button[aria-label*="Stop" i]');
+      if (!btn) return false;
+      const disabled = btn.hasAttribute('disabled') || btn.getAttribute('aria-disabled') === 'true';
+      const style = window.getComputedStyle(btn);
+      const hidden = style.display === 'none' || style.visibility === 'hidden' || (btn instanceof HTMLElement && btn.offsetParent === null);
+      return !disabled && !hidden;
     } catch (_) {
       return false;
     }
   })();`;
 }
 
-export function buildSendOnlyScript(): string {
+export function buildUploadCheckScript(): string {
   return `(() => {
-    const btn = document.querySelector('button[aria-label="Send message"]')
-      || document.querySelector('button[aria-label*="Send" i]');
-    if (btn && typeof (btn as any).click === 'function') {
-      (btn as any).click();
-      return true;
+    try {
+      const btn = document.querySelector('button[aria-label="Send message"]')
+        || document.querySelector('button[aria-label*="Send" i]');
+      if (!btn) return false;
+
+      const container = (btn.closest && btn.closest('div[data-state]')) as HTMLElement | null;
+      const state = container?.getAttribute('data-state');
+      const disabled = btn.hasAttribute('disabled') || btn.getAttribute('aria-disabled') === 'true';
+
+      const style = window.getComputedStyle(btn);
+      const hidden = style.display === 'none' || style.visibility === 'hidden' || (btn instanceof HTMLElement && btn.offsetParent === null);
+
+      // data-state="closed" + 发送按钮禁用，视为上传/准备中
+      return state === 'closed' && disabled && !hidden;
+    } catch (_) {
+      return false;
     }
-    const editor =
-      document.querySelector('.ProseMirror[contenteditable="true"]')
-      || document.querySelector('[contenteditable="true"]')
-      || document.querySelector('div[role="textbox"]');
-    if (editor) {
-      try {
-        editor.dispatchEvent(new KeyboardEvent('keydown', {
-          key: 'Enter',
-          code: 'Enter',
-          keyCode: 13,
-          which: 13,
-          bubbles: true,
-          cancelable: true,
-        }));
-        return true;
-      } catch {}
-    }
-    const form = (editor as any)?.closest?.('form') || document.querySelector('form');
-    if (form && typeof (form as any).requestSubmit === 'function') {
-      (form as any).requestSubmit();
-      return true;
-    }
-    return false;
   })();`;
 }

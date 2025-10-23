@@ -53,43 +53,17 @@ export function buildStatusScript(): string {
   })();`;
 }
 
-export function buildSendOnlyScript(): string {
+export function buildUploadCheckScript(): string {
   return `(() => {
-    const btn =
-      document.querySelector('.send-button-container:not(.disabled) .send-button')
-      || document.querySelector('.send-button')
-      || document.querySelector('button[aria-label*="发送" i]');
-    if (btn && typeof (btn as any).click === 'function') {
-      (btn as any).click();
-      return true;
+    try {
+      const container = document.querySelector('.send-button-container.disabled');
+      if (!container) return false;
+      const s = window.getComputedStyle(container);
+      const hidden = s.display === 'none' || s.visibility === 'hidden';
+      const visible = !hidden && (container instanceof HTMLElement ? container.offsetParent !== null : true);
+      return visible;
+    } catch (_) {
+      return false;
     }
-
-    const editor =
-      document.querySelector('div.chat-input-editor[contenteditable="true"]')
-      || document.querySelector('[contenteditable="true"][aria-label*="输入" i]')
-      || document.querySelector('[contenteditable="true"]')
-      || document.querySelector('div[role="textbox"]');
-
-    if (editor) {
-      try {
-        editor.dispatchEvent(new KeyboardEvent('keydown', {
-          key: 'Enter',
-          code: 'Enter',
-          keyCode: 13,
-          which: 13,
-          bubbles: true,
-          cancelable: true,
-        }));
-        return true;
-      } catch {}
-    }
-
-    const form = (editor as any)?.closest?.('form') || document.querySelector('form');
-    if (form && typeof (form as any).requestSubmit === 'function') {
-      (form as any).requestSubmit();
-      return true;
-    }
-
-    return false;
   })();`;
 }

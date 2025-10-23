@@ -1,15 +1,15 @@
-import { buildScript as buildGemini, buildStatusScript as statusGemini } from './gemini';
-import { buildScript as buildKimi, buildStatusScript as statusKimi, buildSendOnlyScript as sendKimi } from './kimi';
-import { buildScript as buildDeepSeek, buildStatusScript as statusDeepSeek, buildSendOnlyScript as sendDeepSeek } from './deepseek';
-import { buildScript as buildQwen, buildStatusScript as statusQwen } from './qwen';
-import { buildScript as buildChatGPT, buildStatusScript as statusChatGPT, buildSendOnlyScript as sendChatGPT } from './chatgpt';
-import { buildScript as buildClaude, buildStatusScript as statusClaude, buildSendOnlyScript as sendClaude } from './claude';
-import { buildScript as buildDoubao, buildStatusScript as statusDoubao, buildSendOnlyScript as sendDoubao } from './doubao';
-import { buildScript as buildYuanbao, buildStatusScript as statusYuanbao, buildSendOnlyScript as sendYuanbao } from './yuanbao';
-import { buildScript as buildGlm, buildStatusScript as statusGlm, buildSendOnlyScript as sendGlm } from './glm';
-import { buildScript as buildGrok, buildStatusScript as statusGrok, buildSendOnlyScript as sendGrok } from './grok';
-import { buildSendOnlyScript as sendQwen } from './qwen';
-import { buildSendOnlyScript as sendGemini } from './gemini';
+import { buildScript as buildGemini, buildStatusScript as statusGemini, buildUploadCheckScript as uploadGemini } from './gemini';
+import { buildScript as buildKimi, buildStatusScript as statusKimi, buildUploadCheckScript as uploadKimi } from './kimi';
+import { buildScript as buildDeepSeek, buildStatusScript as statusDeepSeek, buildUploadCheckScript as uploadDeepSeek } from './deepseek';
+import { buildScript as buildQwen, buildStatusScript as statusQwen, buildUploadCheckScript as uploadQwen } from './qwen';
+import { buildScript as buildChatGPT, buildStatusScript as statusChatGPT, buildUploadCheckScript as uploadChatGPT } from './chatgpt';
+import { buildScript as buildClaude, buildStatusScript as statusClaude, buildUploadCheckScript as uploadClaude } from './claude';
+import { buildScript as buildDoubao, buildStatusScript as statusDoubao, buildUploadCheckScript as uploadDoubao } from './doubao';
+import { buildScript as buildYuanbao, buildStatusScript as statusYuanbao, buildUploadCheckScript as uploadYuanbao } from './yuanbao';
+import { buildScript as buildGlm, buildStatusScript as statusGlm, buildUploadCheckScript as uploadGlm } from './glm';
+import { buildScript as buildGrok, buildStatusScript as statusGrok, buildUploadCheckScript as uploadGrok } from './grok';
+
+
 
 const handlers: Record<string, (text: string) => string> = {
   gemini: buildGemini,
@@ -47,47 +47,52 @@ export function getStatusCheckScript(id: string): string {
   return fn ? fn() : '';
 }
 
-export function getSendOnlyScript(id: string): string {
-  switch (id) {
-    case 'deepseek':
-      return sendDeepSeek();
-    case 'qwen':
-      return sendQwen();
-    case 'glm':
-      return sendGlm();
-    case 'chatgpt':
-      return sendChatGPT();
-    case 'doubao':
-      return sendDoubao();
-    case 'yuanbao':
-      return sendYuanbao();
-    case 'claude': return sendClaude();
-    case 'gemini': return sendGemini();
-    case 'kimi': return sendKimi();
-    case 'grok': return sendGrok();
-    default:
-      return `(() => {
-        try {
-          const candidates = [
-            'button[type="submit"]',
-            'button[aria-label*="Send" i]',
-            'button[aria-label*="发送" i]',
-            'button[title*="Send" i]',
-            'button:has(svg)'
-          ];
-          let btn = null;
-          for (const sel of candidates) {
-            const el = document.querySelector(sel);
-            if (el) { btn = el; break; }
-          }
-          if (btn && typeof (btn as any).click === 'function') { (btn as any).click(); return true; }
-          const t = document.querySelector('textarea') || document.querySelector('[contenteditable="true"]');
-          if (t) {
-            t.dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter', bubbles: true, cancelable: true }));
-            return true;
-          }
-          return false;
-        } catch (_) { return false; }
-      })();`;
-  }
+// 新增：上传忙碌检测脚本映射与构造
+const uploadHandlers: Record<string, () => string> = {
+  chatgpt: uploadChatGPT,
+  gemini: uploadGemini,
+  kimi: uploadKimi,
+  deepseek: uploadDeepSeek,
+  qwen: uploadQwen,
+  claude: uploadClaude,
+  doubao: uploadDoubao,
+  yuanbao: uploadYuanbao,
+  glm: uploadGlm,
+  grok: uploadGrok,
+};
+
+export function getUploadCheckScript(id: string): string {
+  const fn = uploadHandlers[id];
+  if (fn) return fn();
+  // 通用回退：发送按钮处于 disabled 或存在常见上传/进度元素则视为忙碌
+  return `(() => {
+    try {
+      const disabledSelectors = [
+        'button[type="submit"][disabled]',
+        'button[aria-disabled="true"]',
+        'button[aria-label*="发送" i][disabled]',
+        'button[aria-label*="Send" i][disabled]',
+        '#composer-submit-button[disabled]'
+      ];
+      for (const sel of disabledSelectors) {
+        const el = document.querySelector(sel);
+        if (el) return true;
+      }
+      const progressSelectors = [
+        '[role="progressbar"]',
+        '.loading',
+        '.spinner',
+        '.is-loading',
+        'svg[aria-busy="true"]',
+        '[data-testid*="upload" i]'
+      ];
+      for (const sel of progressSelectors) {
+        const el = document.querySelector(sel);
+        if (el) return true;
+      }
+      return false;
+    } catch (_) {
+      return false;
+    }
+  })();`;
 }

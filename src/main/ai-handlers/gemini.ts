@@ -50,32 +50,22 @@ export function buildStatusScript(): string {
   })();`;
 }
 
-export function buildSendOnlyScript(): string {
+export function buildUploadCheckScript(): string {
   return `(() => {
-    const btn =
-      document.querySelector('button[aria-label*="发送" i]')
-      || document.querySelector('button[aria-label*="send" i]')
-      || document.querySelector('.send-button.submit');
-    if (btn && typeof (btn as any).click === 'function') {
-      (btn as any).click();
-      return true;
+    try {
+      // 麦克风图标存在 或 发送按钮禁用 都视为上传/准备中
+      const mic = document.querySelector('.mat-mdc-button-touch-target');
+      const disabledSend = document.querySelector('button[aria-disabled="true"][aria-label*="发送" i]')
+        || document.querySelector('button[disabled][aria-label*="发送" i]')
+        || document.querySelector('button.send-button[aria-disabled="true"]');
+      const visible = (el) => {
+        if (!el) return false;
+        const s = window.getComputedStyle(el);
+        return s.display !== 'none' && s.visibility !== 'hidden' && (el instanceof HTMLElement ? el.offsetParent !== null : true);
+      };
+      return visible(mic) || visible(disabledSend);
+    } catch (_) {
+      return false;
     }
-    const el =
-      document.querySelector('.ql-editor')
-      || document.querySelector('[contenteditable="true"][aria-label*="prompt" i]')
-      || document.querySelector('div[role="textbox"]')
-      || document.querySelector('textarea');
-    if (el) {
-      try {
-        el.dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter', bubbles: true, cancelable: true }));
-        return true;
-      } catch {}
-    }
-    const form = (el as any)?.closest?.('form') || document.querySelector('form');
-    if (form && typeof (form as any).requestSubmit === 'function') {
-      (form as any).requestSubmit();
-      return true;
-    }
-    return false;
   })();`;
 }

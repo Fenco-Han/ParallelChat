@@ -60,28 +60,18 @@ export function buildStatusScript(): string {
   })();`;
 }
 
-export function buildSendOnlyScript(): string {
+export function buildUploadCheckScript(): string {
   return `(() => {
     try {
-      const sendBtn = document.querySelector('button[type="submit"]')
-        || document.querySelector('button[aria-label*="发送" i]')
-        || document.querySelector('button[title*="发送" i]')
-        || document.querySelector('button:has(svg)');
-      if (sendBtn && !sendBtn.disabled) {
-        sendBtn.click();
-        return true;
-      }
-      // 退化到模拟 Enter
-      const t = document.querySelector('textarea#chat-input') || document.querySelector('textarea');
-      if (t) {
-        const enterEvent = new KeyboardEvent('keydown', {
-          key: 'Enter', code: 'Enter', keyCode: 13, which: 13,
-          bubbles: true, cancelable: true
-        });
-        t.dispatchEvent(enterEvent);
-        return true;
-      }
-      return false;
+      const isVisible = (el) => {
+        if (!el) return false;
+        const s = window.getComputedStyle(el);
+        if (s.display === 'none' || s.visibility === 'hidden') return false;
+        return !(el instanceof HTMLElement) || el.offsetParent !== null;
+      };
+
+      const voiceBtn = document.querySelector('#open-omni-button');
+      return isVisible(voiceBtn);
     } catch (_) {
       return false;
     }
