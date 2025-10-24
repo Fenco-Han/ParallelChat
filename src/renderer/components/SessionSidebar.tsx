@@ -70,9 +70,13 @@ const PlusIcon = ({ size = 16 }: { size?: number }) => (
   </svg>
 );
 
-const GithubIcon = ({ size = 16 }: { size?: number }) => (
-  <svg width={size} height={size} viewBox="0 0 24 24" fill="currentColor" role="img" aria-label="GitHub">
-    <path d="M12 2C6.48 2 2 6.58 2 12.26c0 4.52 2.87 8.35 6.84 9.7.5.1.68-.22.68-.49 0-.24-.01-.87-.01-1.7-2.78.62-3.37-1.2-3.37-1.2-.45-1.17-1.11-1.49-1.11-1.49-.91-.64.07-.63.07-.63 1 .07 1.53 1.04 1.53 1.04.9 1.58 2.36 1.12 2.94.86.09-.67.35-1.12.63-1.38-2.22-.26-4.56-1.14-4.56-5.1 0-1.13.39-2.06 1.02-2.79-.1-.26-.44-1.3.1-2.7 0 0 .83-.27 2.73 1.06.79-.22 1.64-.33 2.49-.33s1.7.11 2.49.33c1.9-1.33 2.73-1.06 2.73-1.06.54 1.4.2 2.44.1 2.7.63.73 1.02 1.66 1.02 2.79 0 3.97-2.34 4.83-4.57 5.08.36.32.68.96.68 1.93 0 1.39-.01 2.51-.01 2.85 0 .27.18.6.69.49A10.03 10.03 0 0 0 22 12.26C22 6.58 17.52 2 12 2Z" />
+// 新增：官网图标
+const GlobeIcon = ({ size = 16 }: { size?: number }) => (
+  <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" role="img" aria-label="官网">
+    <circle cx="12" cy="12" r="10" />
+    <path d="M2 12h20" />
+    <path d="M12 2a15.3 15.3 0 0 1 0 20" />
+    <path d="M12 2a15.3 15.3 0 0 0 0 20" />
   </svg>
 );
 
@@ -146,13 +150,13 @@ function SidebarUpdateFooter() {
     <div className="px-3 py-3 border-t border-slate-200 bg-white/80">
       <div className="flex items-center justify-between gap-2">
         <a
-          href="https://github.com/woniu9524/ParallelChat"
+          href="https://www.parallelchat.top/"
           target="_blank"
           rel="noreferrer"
           className="inline-flex items-center gap-1 text-slate-700 hover:text-slate-900"
-          title="GitHub"
+          title="官网"
         >
-          <GithubIcon size={16} />
+          <GlobeIcon size={16} />
         </a>
         <div className="flex-1 text-xs text-slate-600 truncate">
           {t('sidebar.footerVersion', { version: appVersion || '-' })}
@@ -355,7 +359,7 @@ export default function SessionSidebar() {
                         </button>
                         <button
                           onClick={cancelEdit}
-                          className="flex items-center justify-center w-6 h-6 rounded text-slate-500 hover:bg-slate-100 transition-colors"
+                          className="flex items中心 justify-center w-6 h-6 rounded text-slate-500 hover:bg-slate-100 transition-colors"
                           title={t('actions.cancel')}
                         >
                           <CancelIcon size={14} />

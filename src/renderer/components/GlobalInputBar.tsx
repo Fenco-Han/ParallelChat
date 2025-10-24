@@ -398,6 +398,46 @@ export default function GlobalInputBar() {
     if (others.length) await addFiles(others, 'file');
   };
 
+  // 粘贴图片上传：检测剪贴板中的图片并保存为临时文件
+  const handlePaste = async (e: React.ClipboardEvent<HTMLTextAreaElement>) => {
+    const items = Array.from(e.clipboardData?.items ?? []);
+    const imageItems = items.filter((i) => i.type && i.type.startsWith('image/'));
+    if (imageItems.length === 0) return;
+    e.preventDefault();
+
+    const paths: string[] = [];
+    for (const item of imageItems) {
+      const file = item.getAsFile();
+      if (!file) continue;
+      try {
+        const buf = await file.arrayBuffer();
+        const ext = (() => {
+          const mime = (file.type || '').toLowerCase();
+          if (mime.includes('png')) return '.png';
+          if (mime.includes('jpeg') || mime.includes('jpg')) return '.jpg';
+          if (mime.includes('webp')) return '.webp';
+          if (mime.includes('gif')) return '.gif';
+          if (mime.includes('bmp')) return '.bmp';
+          if (mime.includes('svg')) return '.svg';
+          if (mime.includes('heic')) return '.heic';
+          return '.png';
+        })();
+        const baseName =
+          file.name && file.name.trim().length > 0
+            ? file.name
+            : `pasted-${Date.now()}${ext}`;
+        const res = (await window.parallelchat?.invoke('parallelchat/file/save-temp', { name: baseName, buffer: buf })) as any;
+        if (res?.ok && typeof res?.filePath === 'string') {
+          paths.push(res.filePath);
+        }
+      } catch {}
+    }
+
+    if (paths.length) {
+      await addFiles(paths, 'image');
+    }
+  };
+
   return (
     <div className="p-2">
       {/* 统一的输入框容器 */}
@@ -436,6 +476,7 @@ export default function GlobalInputBar() {
               onCompositionStart={() => setIsComposing(true)}
               onCompositionEnd={() => setIsComposing(false)}
               onKeyDown={onKeyDown}
+              onPaste={handlePaste}
               className="min-h-[40px] max-h-[100px] border-0 resize-none overflow-y-auto focus:ring-0 focus:outline-none p-0 text-base"
               style={{ boxShadow: 'none' }}
             />
