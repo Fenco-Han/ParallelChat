@@ -198,9 +198,11 @@ export default function GlobalInputBar() {
 
     setLoading(true);
 
-    // 1) 仅上传附件（默认有文本，上传后等待站点就绪再统一 broadcast）
+    // 1) 仅上传附件（并行上传到各AI，提高速度）
     if (attachments.length > 0) {
       try {
+        const filePaths = attachments.map(a => a.filePath);
+
         const waitForUploadIdle = async (id: string, timeoutMs = 20000, intervalMs = 500) => {
           const start = Date.now();
           while (Date.now() - start < timeoutMs) {
@@ -213,11 +215,19 @@ export default function GlobalInputBar() {
             await new Promise((r) => setTimeout(r, intervalMs));
           }
         };
-        for (const id of targets) {
-          const filePaths = attachments.map(a => a.filePath);
-          await window.parallelchat?.invoke('parallelchat/view/upload-files', { id, selector: 'input[type="file"]', filePaths });
-          await waitForUploadIdle(id, 18000, 600);
-        }
+
+        // 并行设置文件到所有目标视图
+        await Promise.allSettled(
+          targets.map((id) =>
+            window.parallelchat?.invoke('parallelchat/view/upload-files', { id, selector: 'input[type="file"]', filePaths })
+          )
+        );
+
+        // 并行等待所有站点处理完上传
+        await Promise.allSettled(
+          targets.map((id) => waitForUploadIdle(id, 18000, 600))
+        );
+
         // 清空附件
         setAttachments([]);
       } catch {}

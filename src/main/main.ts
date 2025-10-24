@@ -744,137 +744,25 @@ ipcMain.handle('parallelchat/file/read-data-url', async (_e, filePath: string) =
 /**
  * —— WebContentsView  创建与布局管理 ——
  */
-
 function getSanitizedUA(): string {
   const chromeVersion = process.versions.chrome || '118.0.0.0';
   return `Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/${chromeVersion} Safari/537.36`;
 }
-
 function ensureSessionUA(partition: string) {
   if (patchedPartitions.has(partition)) return;
   const s = session.fromPartition(partition);
   s.webRequest.onBeforeSendHeaders((details, callback) => {
+    const chromeVersion = process.versions.chrome || '118.0.0.0';
     const ua = getSanitizedUA();
     const headers = {
       ...details.requestHeaders,
       'User-Agent': ua,
-      // 更自然的语言首选项，减少指纹异常
-      'Accept-Language': 'zh-CN,zh;q=0.9,en-US;q=0.8,en;q=0.7',
+      // 模拟真实浏览器的语言首选项，减少指纹异常
+      'Accept-Language': `${app.getLocale() || 'zh-CN'},en;q=0.9`,
     };
     callback({ cancel: false, requestHeaders: headers });
   });
   patchedPartitions.add(partition);
-}
-
-function getStealthBaseScript(): string {
-  return `(() => {
-    try {
-      // webdriver 隐藏：删除属性而非重新定义，避免\"in navigator\"为真
-      try {
-        const proto = (Navigator || {}).prototype;
-        if (proto && Object.prototype.hasOwnProperty.call(proto, 'webdriver')) {
-          try { delete proto.webdriver; } catch {}
-        }
-        try { delete (navigator || {}).webdriver; } catch {}
-      } catch {}
-
-      // 语言与列表与网络层对齐（只读、可配置）
-      try {
-        const setRO = (obj, prop, value) => {
-          try { Object.defineProperty(obj, prop, { get: () => value, configurable: true }); } catch {}
-        };
-        setRO(navigator, 'language', 'zh-CN');
-        setRO(navigator, 'languages', ['zh-CN','zh','en-US','en']);
-      } catch {}
-
-      // 提供最小的 chrome 对象结构，避免常见检测报错
-      try {
-        const makeNative = (name) => {
-          const fn = function(){};
-          try { Object.defineProperty(fn, 'name', { value: name, configurable: true }); } catch {}
-          return fn;
-        };
-        const chromeObj = (window.chrome && typeof window.chrome === 'object') ? window.chrome : {};
-        if (!('app' in chromeObj)) chromeObj.app = { isInstalled: false };
-        if (!('runtime' in chromeObj)) chromeObj.runtime = { id: undefined, connect: makeNative('connect'), sendMessage: makeNative('sendMessage') };
-        if (!('webstore' in chromeObj)) chromeObj.webstore = { install: makeNative('install') };
-        try { Object.defineProperty(window, 'chrome', { value: chromeObj, writable: false, enumerable: true, configurable: false }); } catch { window.chrome = chromeObj; }
-      } catch {}
-
-      // 关键：确保父页面可见 iframe.contentWindow.chrome（同源）
-      try {
-        const assignIframeChrome = (iframe) => {
-          if (!iframe || !iframe.contentWindow) return;
-          try {
-            const win = iframe.contentWindow;
-            if (!('chrome' in win)) {
-              Object.defineProperty(win, 'chrome', { value: window.chrome, writable: false, configurable: false });
-            }
-          } catch (_) {}
-        };
-
-        // 处理现有 iframe
-        try {
-          const list = document.querySelectorAll('iframe');
-          for (const el of list) {
-            assignIframeChrome(el);
-            try { el.addEventListener('load', () => assignIframeChrome(el)); } catch {}
-          }
-        } catch {}
-
-        // 拦截动态创建的 iframe
-        try {
-          const origCreate = document.createElement.bind(document);
-          document.createElement = function(tagName) {
-            const el = origCreate(tagName);
-            if (String(tagName).toLowerCase() === 'iframe') {
-              try { el.addEventListener('load', () => assignIframeChrome(el)); } catch {}
-            }
-            return el;
-          };
-        } catch {}
-
-        // 观察 DOM 变化，注入到新增的 iframe
-        try {
-          const obs = new MutationObserver((mutations) => {
-            for (const m of mutations) {
-              for (const node of (m.addedNodes || [])) {
-                if (node && (node as any).tagName === 'IFRAME') {
-                  const iframe = node as any;
-                  assignIframeChrome(iframe);
-                  try { iframe.addEventListener('load', () => assignIframeChrome(iframe)); } catch {}
-                }
-              }
-            }
-          });
-          obs.observe(document.documentElement || document.body || document, { childList: true, subtree: true });
-        } catch {}
-      } catch {}
-    } catch {}
-  })();`;
-}
-
-function setupStealthPatching(wc: Electron.WebContents) {
-  const injectAllFrames = () => {
-    try { wc.executeJavaScript(getStealthBaseScript(), true).catch(() => {}); } catch {}
-    try {
-      const frames = wc.mainFrame?.frames || [];
-      for (const f of frames) {
-        try { f.executeJavaScript(getStealthBaseScript(), true).catch(() => {}); } catch {}
-      }
-    } catch {}
-  };
-  // 尽早注入：dom-ready 时主帧与已存在子帧
-  try { wc.on('dom-ready', injectAllFrames); } catch {}
-  // 新子帧加载完成后补丁
-  try {
-    wc.on('did-frame-finish-load', (_e, _isMain, _pid, routingId) => {
-      try {
-        const target = wc.mainFrame?.frames?.find((f) => (f as any).routingId === routingId);
-        if (target) { target.executeJavaScript(getStealthBaseScript(), true).catch(() => {}); }
-      } catch {}
-    });
-  } catch {}
 }
 
 function createAiView(ai: AiProvider): WebContentsView {
@@ -891,11 +779,10 @@ function createAiView(ai: AiProvider): WebContentsView {
     },
   });
 
-  // 统一 UA（渲染器可见与网络层一致）
-  try { view.webContents.setUserAgent(getSanitizedUA()); } catch {}
-
-  // 注入 stealth 基础补丁（隐藏 webdriver、提供最小 chrome 对象、语言一致）
-  setupStealthPatching(view.webContents);
+  view.webContents.on('did-finish-load', () => {
+    // 移除自动化指纹
+    view.webContents.executeJavaScript('delete navigator.webdriver;').catch(() => {});
+  });
 
   // 加载默认入口
   try {
@@ -928,10 +815,10 @@ function createAiView(ai: AiProvider): WebContentsView {
           },
         });
 
-        try { loginWin.webContents.setUserAgent(getSanitizedUA()); } catch {}
-
-        // 登录窗口同样应用 stealth 补丁
-        setupStealthPatching(loginWin.webContents);
+        loginWin.webContents.on('did-finish-load', () => {
+          // 清理自动化指纹
+          loginWin.webContents.executeJavaScript('delete navigator.webdriver;').catch(() => {});
+        });
 
         const maybeClose = (nextUrl: string) => {
           if (!nextUrl) return;
