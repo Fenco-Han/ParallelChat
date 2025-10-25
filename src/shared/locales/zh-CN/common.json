@@ -84,7 +84,7 @@
     "inspectElement": "检查元素"
   },
   "input": {
-    "hint": "按 Enter 发送，Shift + Enter 换行。标签布局下按 Tab 切换展示网站。",
+    "hint": "按 Enter 发送，Shift + Enter 换行。按 Tab 切换展示网站。",
     "selectAll": "全选",
     "addAiPrompt": "请先通过\"添加AI\"添加助手"
   },

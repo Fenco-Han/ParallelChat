@@ -84,7 +84,7 @@
     "inspectElement": "Inspect element"
   },
   "input": {
-    "hint": "Press Enter to send, Shift+Enter for newline. In Tabs layout, use Tab to switch websites.",
+    "hint": "Press Enter to send, Shift+Enter for newline. Use Tab to switch websites.",
     "selectAll": "Select All",
     "addAiPrompt": "Please add assistants via \"Add AI\" first"
   },

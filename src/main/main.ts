@@ -912,13 +912,12 @@ function syncAiViews() {
   const ids = new Set<string>(providers.map((p) => p.id));
   log.info(`[layout][syncAiViews][start] mode=${layout?.mode ?? 'tabs'} activeGroupId=${layout?.activeGroupId ?? ''} providers=${providers.map(p=>p.id).join(',')} existingViews=${Array.from(viewsRegistry.keys()).join(',')}`);
 
-  // 在分组模式下，确保活动分组的模型也被创建视图（不依赖标签模式）
+  // 在分组模式下，视图常驻：包含所有分组的模型并集
   if ((layout?.mode ?? 'tabs') === 'groups') {
-    const activeGroupId = layout?.activeGroupId ?? (layout?.groupOrder && layout.groupOrder[0]) ?? (groups[0]?.id);
-    const activeGroup = groups.find((g) => g.id === activeGroupId);
-    if (activeGroup?.modelIds?.length) {
-      log.info(`[layout][syncAiViews][groups] activeGroupId=${activeGroupId} include=${activeGroup.modelIds.join(',')}`);
-      for (const id of activeGroup.modelIds) ids.add(id);
+    const unionIds = Array.from(new Set(groups.flatMap((g) => Array.isArray(g.modelIds) ? g.modelIds : [])));
+    if (unionIds.length > 0) {
+      log.info(`[layout][syncAiViews][groups] union=${unionIds.join(',')}`);
+      for (const id of unionIds) ids.add(id);
     }
   }
 
