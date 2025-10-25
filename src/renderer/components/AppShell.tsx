@@ -86,34 +86,52 @@ export default function AppShell() {
     };
   }, []);
 
-  // 全局 Tab 键在 tabs 布局下循环切换标签（Shift+Tab 反向）
+  // 全局 Tab 键在 tabs / groups 布局下循环切换（Shift+Tab 反向）
   useEffect(() => {
     const onKeyDown = (e: KeyboardEvent) => {
       if (settingsOpen) return; // 弹窗时不拦截，保留原生导航
-      if (layoutMode !== 'tabs') return;
       // 仅处理纯 Tab（不含 Ctrl/Alt/Meta），支持 Shift+Tab 反向
       if (e.key !== 'Tab' || e.ctrlKey || e.altKey || e.metaKey) return;
 
-      const ids = providers.map((p) => p.id);
-      if (ids.length <= 1) return;
+      if (layoutMode === 'tabs') {
+        const ids = providers.map((p) => p.id);
+        if (ids.length <= 1) return;
 
-      const currentIndex = activeId ? ids.indexOf(activeId) : 0;
-      const normalizedIndex = currentIndex >= 0 ? currentIndex : 0;
-      const nextIndex = e.shiftKey
-        ? (normalizedIndex - 1 + ids.length) % ids.length
-        : (normalizedIndex + 1) % ids.length;
+        const currentIndex = activeId ? ids.indexOf(activeId) : 0;
+        const normalizedIndex = currentIndex >= 0 ? currentIndex : 0;
+        const nextIndex = e.shiftKey
+          ? (normalizedIndex - 1 + ids.length) % ids.length
+          : (normalizedIndex + 1) % ids.length;
 
-      const nextId = ids[nextIndex];
-      e.preventDefault();
-      e.stopPropagation();
-      activateTab(nextId);
+        const nextId = ids[nextIndex];
+        e.preventDefault();
+        e.stopPropagation();
+        activateTab(nextId);
+      } else if (layoutMode === 'groups') {
+        // 使用与 orderedGroupIds 相同的逻辑计算分组完整顺序
+        const fromOrder = (groupOrder || []).filter((gid) => groups.some((x) => x.id === gid));
+        const rest = groups.filter((g) => !fromOrder.includes(g.id)).map((g) => g.id);
+        const ids = [...fromOrder, ...rest];
+        if (ids.length <= 1) return;
+
+        const currentIndex = activeGroupId ? ids.indexOf(activeGroupId) : 0;
+        const normalizedIndex = currentIndex >= 0 ? currentIndex : 0;
+        const nextIndex = e.shiftKey
+          ? (normalizedIndex - 1 + ids.length) % ids.length
+          : (normalizedIndex + 1) % ids.length;
+
+        const nextId = ids[nextIndex];
+        e.preventDefault();
+        e.stopPropagation();
+        activateGroup(nextId);
+      }
     };
 
     window.addEventListener('keydown', onKeyDown);
     return () => {
       window.removeEventListener('keydown', onKeyDown);
     };
-  }, [layoutMode, providers, activeId, settingsOpen]);
+  }, [layoutMode, providers, groups, activeId, activeGroupId, groupOrder, settingsOpen]);
 
   // 监听运行状态并更新 Tab 动效
   useEffect(() => {
@@ -299,7 +317,12 @@ export default function AppShell() {
         <Workspace />
 
         <div className="bg-white shadow-lg border-t border-slate-100">
-          <GlobalInputBar />
+          <GlobalInputBar
+            layoutMode={layoutMode}
+            activeGroupId={currentGroupTabValue}
+            providers={providers}
+            groups={groups}
+          />
         </div>
 
         <SettingsModal open={settingsOpen} onClose={() => setSettingsOpen(false)} />

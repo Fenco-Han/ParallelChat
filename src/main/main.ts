@@ -179,9 +179,9 @@ const createWindow = async () => {
             const providers = getProviders();
             const enabledIds = new Set(providers.map((p) => p.id));
             const presets = [
-              { id: 'group-dqg', name: 'DeepSeek|Qwen|GLM', ids: ['deepseek','qwen','glm'] },
-              { id: 'group-kdy', name: 'Kimi|Doubao|Yuanbao', ids: ['kimi','doubao','yuanbao'] },
-              { id: 'group-ccg', name: 'ChatGPT|Claude|Grok', ids: ['chatgpt','claude','grok'] },
+              { id: 'group-dqg', name: 'DeepSeek · Qwen · GLM', ids: ['deepseek','qwen','glm'] },
+              { id: 'group-kdy', name: 'Kimi · Doubao · Yuanbao', ids: ['kimi','doubao','yuanbao'] },
+              { id: 'group-ccg', name: 'ChatGPT · Claude · Grok', ids: ['chatgpt','claude','grok'] },
             ];
             const created = presets
               .map((c) => ({ id: c.id, name: c.name, modelIds: c.ids.filter((x) => enabledIds.has(x)) }))
@@ -204,6 +204,7 @@ const createWindow = async () => {
         }
       } catch {}
 
+      log.info(`[ai][ready][startup] ids=${Array.from(viewsRegistry.keys()).join(',')}`);
       mainWindow?.webContents.send('parallelchat/ai/ready', {
         ids: Array.from(viewsRegistry.keys()),
       });
@@ -909,12 +910,14 @@ function syncAiViews() {
   const layout = (store.get('layout') as StoreSchema['layout'] | undefined) ?? {};
   const groups = (store.get('aiGroups') as Array<{ id: string; name?: string; modelIds: string[] }> | undefined) ?? [];
   const ids = new Set<string>(providers.map((p) => p.id));
+  log.info(`[layout][syncAiViews][start] mode=${layout?.mode ?? 'tabs'} activeGroupId=${layout?.activeGroupId ?? ''} providers=${providers.map(p=>p.id).join(',')} existingViews=${Array.from(viewsRegistry.keys()).join(',')}`);
 
   // 在分组模式下，确保活动分组的模型也被创建视图（不依赖标签模式）
   if ((layout?.mode ?? 'tabs') === 'groups') {
     const activeGroupId = layout?.activeGroupId ?? (layout?.groupOrder && layout.groupOrder[0]) ?? (groups[0]?.id);
     const activeGroup = groups.find((g) => g.id === activeGroupId);
     if (activeGroup?.modelIds?.length) {
+      log.info(`[layout][syncAiViews][groups] activeGroupId=${activeGroupId} include=${activeGroup.modelIds.join(',')}`);
       for (const id of activeGroup.modelIds) ids.add(id);
     }
   }
@@ -924,6 +927,7 @@ function syncAiViews() {
     if (!ids.has(id)) {
       try { mainWindow?.contentView.removeChildView(view); } catch {}
       viewsRegistry.delete(id);
+      log.warn(`[layout][syncAiViews] remove view ${id}`);
     }
   }
 
@@ -934,10 +938,17 @@ function syncAiViews() {
       if (!p) continue;
       const v = createAiView(p);
       viewsRegistry.set(id, v);
+      log.info(`[layout][syncAiViews] create view ${id}`);
     }
   }
 
   applyLayout();
+  log.info(`[layout][syncAiViews][end] views=${Array.from(viewsRegistry.keys()).join(',')}`);
+  
+  // 通知渲染进程更新可用模型列表
+  const currentIds = Array.from(viewsRegistry.keys());
+  mainWindow?.webContents.send('parallelchat/ai/ready', { ids: currentIds });
+  log.info(`[ai][ready][sync] ids=${currentIds.join(',')}`);
 }
 
 function applyLayout() {
@@ -952,6 +963,7 @@ function applyLayout() {
   const orderedProviders: AiProvider[] = order
     .map((id) => providers.find((p) => p.id === id))
     .filter((p): p is AiProvider => !!p);
+  log.info(`[layout][applyLayout] mode=${mode} order=${order.join(',')} views=${Array.from(viewsRegistry.keys()).join(',')}`);
 
   // 计算安全区域后的可用矩形，避免顶端悬浮按钮被原生视图覆盖
   const safeY = workspaceBounds.y + WORKSPACE_SAFE_TOP;
@@ -968,6 +980,7 @@ function applyLayout() {
     const activeId = order[0];
     if (!activeId) return;
     const v = viewsRegistry.get(activeId);
+    log.info(`[layout][applyLayout][tabs] activeId=${activeId} exists=${!!v}`);
     if (!v) return;
     mainWindow.contentView.addChildView(v);
     v.setBounds({
@@ -985,6 +998,7 @@ function applyLayout() {
   const activeGroup = groups.find((g) => g.id === activeGroupId) ?? groups[0];
   if (!activeGroup || !Array.isArray(activeGroup.modelIds) || activeGroup.modelIds.length === 0) return;
   const visibleModelIds = activeGroup.modelIds.filter((id) => viewsRegistry.has(id));
+  log.info(`[layout][applyLayout][groups] activeGroupId=${activeGroupId} visible=${visibleModelIds.join(',')} count=${visibleModelIds.length}`);
   const count = visibleModelIds.length;
   if (count === 0) return;
   const colWidth = Math.floor(workspaceBounds.width / count);
@@ -1008,6 +1022,7 @@ ipcMain.on('parallelchat/workspace/bounds', (_e, bounds: { x: number; y: number;
 ipcMain.on('parallelchat/layout/set', (_e, mode: 'groups' | 'tabs') => {
   const current = (store.get('layout') as StoreSchema['layout'] | undefined) ?? { order: [] };
   store.set('layout', { ...current, mode });
+  log.info(`[layout][set] mode=${mode}`);
   syncAiViews();
 });
 
@@ -1022,6 +1037,7 @@ ipcMain.on('parallelchat/layout/active', (_e, id: string) => {
   };
   const nextOrder = [id, ...current.order.filter((x) => x !== id)];
   store.set('layout', { ...current, order: nextOrder });
+  log.info(`[layout][active][tabs] id=${id}`);
   applyLayout();
 });
 
@@ -1032,6 +1048,7 @@ ipcMain.on('parallelchat/layout/group/active', (_e, groupId: string) => {
   if (!idSet.has(groupId)) return;
   const current = (store.get('layout') as StoreSchema['layout'] | undefined) ?? { mode: 'groups', groupOrder: groups.map((g) => g.id) };
   store.set('layout', { ...current, activeGroupId: groupId });
+  log.info(`[layout][active][group] id=${groupId}`);
   syncAiViews();
 });
 
@@ -1044,6 +1061,7 @@ ipcMain.on('parallelchat/groups/reload', () => {
 // 依据最新 aiProviders 同步视图（供后续设置页使用）
 ipcMain.on('parallelchat/ai/reload', () => {
   syncAiViews();
+  log.info(`[ai][ready][reload] ids=${Array.from(viewsRegistry.keys()).join(',')}`);
   mainWindow?.webContents.send('parallelchat/ai/ready', { ids: Array.from(viewsRegistry.keys()) });
 });
 

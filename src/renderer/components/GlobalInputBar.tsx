@@ -3,24 +3,36 @@ import { Textarea } from './ui/textarea';
 import { Checkbox } from './ui/checkbox';
 import { Label } from './ui/label';
 import { useTranslation } from 'react-i18next';
+import { PROVIDER_CATALOG } from '../../shared/providers';
 
 type AiProvider = { id: string; name: string; url: string; handler?: string };
+type AiGroup = { id: string; name: string; modelIds: string[] };
 
-export default function GlobalInputBar() {
+export default function GlobalInputBar({
+  layoutMode,
+  activeGroupId,
+  providers,
+  groups,
+}: {
+  layoutMode: 'groups' | 'tabs';
+  activeGroupId?: string;
+  providers: AiProvider[];
+  groups: AiGroup[];
+}) {
   const { t } = useTranslation();
   const [text, setText] = useState('');
-  const [providers, setProviders] = useState<AiProvider[]>([]);
+
   const [selected, setSelected] = useState<Record<string, boolean>>({});
   const [loading, setLoading] = useState(false);
   const [readyIds, setReadyIds] = useState<string[]>([]);
-  const [activeSessionId, setActiveSessionId] = useState<string | undefined>(undefined);
+
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const [collapsed, setCollapsed] = useState(false);
   const [isDragging, setIsDragging] = useState(false);
 
   type Attachment = { id: string; filePath: string; mime: string; name: string; dataUrl?: string; kind: 'image' | 'file' };
   const [attachments, setAttachments] = useState<Attachment[]>([]);
-  const [menuOpen, setMenuOpen] = useState(false);
+
 
   useEffect(() => {
     const el = textareaRef.current;
@@ -33,76 +45,25 @@ export default function GlobalInputBar() {
   }, [text]);
 
   useEffect(() => {
-    (async () => {
-      try {
-        const value = (await window.parallelchat?.invoke('parallelchat/store/get', 'aiProviders')) as
-          | AiProvider[]
-          | undefined;
-        setProviders(value ?? []);
-      } catch {
-        setProviders([]);
-      }
-    })();
-    // 修改：在 ai/ready 时同时刷新 providers 列表
     const off = window.parallelchat?.on('parallelchat/ai/ready', async (payload: any) => {
       const ids = (payload?.ids ?? []) as string[];
+      console.debug('[inputbar][ai/ready]', { ids, layoutMode });
       setReadyIds(ids);
-      try {
-        const value = (await window.parallelchat?.invoke('parallelchat/store/get', 'aiProviders')) as AiProvider[] | undefined;
-        setProviders(value ?? []);
-      } catch {
-        setProviders([]);
-      }
-      // 优先从localStorage读取选择状态，没有时才默认全选
-      setSelected((prev) => {
-        const storedSelected = loadSelectedFromStorage();
-        const hasStoredSelection = Object.keys(storedSelected).length > 0;
-
-        if (hasStoredSelection) {
-          // 使用localStorage中的选择状态
-          return { ...prev, ...storedSelected };
-        } else {
-          // localStorage为空时，检查当前是否已有选择
-          const hasAnySelection = Object.values(prev).some(Boolean);
-          if (hasAnySelection) return prev;
-
-          // 默认全选所有已就绪的提供商
-          const next = { ...prev };
-          for (const id of ids) {
-            next[id] = true;
-          }
-          // 保存默认选择到localStorage
+      if (layoutMode === 'tabs') {
+        setSelected((prev) => {
+          const storedSelected = loadSelectedFromStorage();
+          const hasStored = Object.keys(storedSelected).length > 0;
+          if (hasStored) return { ...prev, ...storedSelected };
+          const next: Record<string, boolean> = { ...prev };
+          for (const id of ids) next[id] = true;
           saveSelectedToStorage(next);
           return next;
-        }
-      });
-    });
-    return () => {
-    off && off();
-  };
-  }, []);
-
-  useEffect(() => {
-    (async () => {
-      try {
-        const id = (await window.parallelchat?.invoke('parallelchat/store/get', 'activeSessionId')) as string | undefined;
-        setActiveSessionId(id);
-      } catch {}
-    })();
-    const off = window.parallelchat?.on('parallelchat/session/changed', async (payload: any) => {
-      // 优先使用事件中的 activeId，避免从 store 读取到旧值
-      if (payload && 'activeId' in payload) {
-        setActiveSessionId(payload.activeId);
-      } else {
-        // 只有在事件没有 activeId 时才回退到从 store 读取
-        try {
-          const id = (await window.parallelchat?.invoke('parallelchat/store/get', 'activeSessionId')) as string | undefined;
-          setActiveSessionId(id);
-        } catch {}
+        });
       }
     });
     return () => { off && off(); };
-  }, []);
+  }, [layoutMode]);
+
 
   useEffect(() => {
     const offSending = window.parallelchat?.on('parallelchat/message/sending', () => setLoading(true));
@@ -118,14 +79,35 @@ export default function GlobalInputBar() {
     };
   }, []);
 
-  const existingIds = useMemo(() => new Set(providers.map((p) => p.id)), [providers]);
   const loadedSet = useMemo(() => new Set(readyIds), [readyIds]);
+
   const hasSelection = useMemo(() => Object.values(selected).some(Boolean), [selected]);
   const hasText = useMemo(() => text.trim().length > 0, [text]);
   const canSend = useMemo(() => hasText && hasSelection && !loading, [hasText, hasSelection, loading]);
 
   // 计算可用的提供商
-  const availableProviders = useMemo(() => providers.filter(p => loadedSet.has(p.id)), [providers, loadedSet]);
+  const availableProviders = useMemo(() => {
+    const toProvider = (id: string) => providers.find((p) => p.id === id) || PROVIDER_CATALOG.find((p) => p.id === id);
+    if (layoutMode === 'groups') {
+      // 显示所有分组的并集（不再根据 loadedSet 过滤显示）。
+      const unionIds = Array.from(new Set(groups.flatMap((g) => g.modelIds)));
+      return unionIds.map(toProvider).filter((p): p is AiProvider => !!p);
+    }
+    return providers.filter((p) => loadedSet.has(p.id));
+  }, [layoutMode, groups, providers, loadedSet]);
+
+  useEffect(() => {
+    try {
+      console.debug('[inputbar][availableProviders]', {
+        mode: layoutMode,
+        activeGroupId,
+        readyIds,
+        available: availableProviders.map(p => p.id),
+      });
+    } catch {}
+  }, [layoutMode, activeGroupId, readyIds, availableProviders]);
+
+  // 已移除：分组模式下自动覆盖选择的 effect，保留用户手动选择
 
   // 检查是否全选
   const isAllSelected = useMemo(() => {
@@ -160,30 +142,34 @@ export default function GlobalInputBar() {
   const toggle = (id: string) => {
     setSelected((prev) => {
       const newSelected = { ...prev, [id]: !prev[id] };
-      saveSelectedToStorage(newSelected);
+      if (layoutMode === 'tabs') {
+        saveSelectedToStorage(newSelected);
+      }
       return newSelected;
     });
   };
 
   const toggleAll = () => {
     if (isAllSelected) {
-      // 取消全选
       setSelected((prev) => {
         const newSelected = { ...prev };
         availableProviders.forEach(p => {
           newSelected[p.id] = false;
         });
-        saveSelectedToStorage(newSelected);
+        if (layoutMode === 'tabs') {
+          saveSelectedToStorage(newSelected);
+        }
         return newSelected;
       });
     } else {
-      // 全选
       setSelected((prev) => {
         const newSelected = { ...prev };
         availableProviders.forEach(p => {
           newSelected[p.id] = true;
         });
-        saveSelectedToStorage(newSelected);
+        if (layoutMode === 'tabs') {
+          saveSelectedToStorage(newSelected);
+        }
         return newSelected;
       });
     }
@@ -193,7 +179,8 @@ export default function GlobalInputBar() {
     if (!canSend) return;
     const message = text.trim();
 
-    const targets = providers.filter((p) => selected[p.id] && loadedSet.has(p.id)).map((p) => p.id);
+    const targets = Object.keys(selected).filter((id) => selected[id] && loadedSet.has(id));
+    console.debug('[inputbar][send]', { targets, attachments: attachments.length, textLen: message.length });
     if (targets.length === 0) return;
 
     setLoading(true);
@@ -273,39 +260,33 @@ export default function GlobalInputBar() {
     }
   };
 
-  // 发送图标 SVG
-  const SendIcon = () => (
-    <svg
-      width="20"
-      height="20"
-      viewBox="0 0 1024 1024"
-      xmlns="http://www.w3.org/2000/svg"
-    >
-      <path
-        d="M546.858667 520.405333l-321.365334 53.589334a21.333333 21.333333 0 0 0-16.469333 13.568l-110.848 296.832c-10.581333 27.306667 17.962667 53.333333 44.16 40.234666l768-384a32 32 0 0 0 0-57.258666l-768-384c-26.197333-13.098667-54.741333 12.928-44.16 40.234666L209.066667 436.437333a21.333333 21.333333 0 0 0 16.469333 13.610667l321.365333 53.546667a8.533333 8.533333 0 0 1 0 16.810666z"
-        fill="currentColor"
-      />
+  // 新增：添加按钮图标
+  const AddIcon = () => (
+    <svg width="20" height="20" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg">
+      <path d="M10 4v12M4 10h12" stroke="currentColor" strokeWidth="2" fill="none" strokeLinecap="round" />
     </svg>
   );
+
+  const SendIcon = () => (
+    <svg width="20" height="20" viewBox="0 0 1024 1024" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+      <path d="M546.858667 520.405333l-321.365334 53.589334a21.333333 21.333333 0 0 0-16.469333 13.568l-110.848 296.832c-10.581333 27.306667 17.962667 53.333333 44.16 40.234666l768-384a32 32 0 0 0 0-57.258666l-768-384c-26.197333-13.098667-54.741333 12.928-44.16 40.234666L209.066667 436.437333a21.333333 21.333333 0 0 0 16.469333 13.610667l321.365333 53.546667a8.533333 8.533333 0 0 1 0 16.810666z" fill="currentColor" />
+    </svg>
+  );
+
   const RectIcon = () => (
     <svg width="20" height="20" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg">
       <rect x="3" y="3" width="14" height="14" rx="2" fill="currentColor" />
     </svg>
   );
+
+
   const CollapseIcon = ({ collapsed }: { collapsed: boolean }) => (
-    <svg width="20" height="20" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg">
+    <svg width="16" height="16" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg">
       {collapsed ? (
         <path d="M5 12l5-5 5 5" stroke="currentColor" strokeWidth="2" fill="none" strokeLinecap="round" strokeLinejoin="round" />
       ) : (
         <path d="M5 8l5 5 5-5" stroke="currentColor" strokeWidth="2" fill="none" strokeLinecap="round" strokeLinejoin="round" />
       )}
-    </svg>
-  );
-
-  // 新增：添加按钮图标
-  const AddIcon = () => (
-    <svg width="20" height="20" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg">
-      <path d="M10 4v12M4 10h12" stroke="currentColor" strokeWidth="2" fill="none" strokeLinecap="round" />
     </svg>
   );
 
@@ -348,14 +329,12 @@ export default function GlobalInputBar() {
     if (r && !r.canceled && Array.isArray(r.filePaths)) {
       await addFiles(r.filePaths, 'image');
     }
-    setMenuOpen(false);
   };
   const openFileDialog = async () => {
     const r = await window.parallelchat?.invoke('parallelchat/dialog/open', { mode: 'file', multi: true }) as any;
     if (r && !r.canceled && Array.isArray(r.filePaths)) {
       await addFiles(r.filePaths, 'file');
     }
-    setMenuOpen(false);
   };
 
   // 拖拽上传事件处理
@@ -512,76 +491,65 @@ export default function GlobalInputBar() {
                 </div>
 
                 {/* 分隔线 */}
-                <div className="w-px h-4 bg-gray-300"></div>
+                <div className="w-px h-5 bg-gray-200" />
 
-                {/* 全选按钮 */}
-                <Label className="inline-flex items-center gap-2 text-sm font-medium cursor-pointer">
+                {/* 全选复选框 */}
+                <div className="flex items-center gap-1">
                   <Checkbox
-                     checked={isAllSelected ? true : isIndeterminate ? 'indeterminate' : false}
-                     onCheckedChange={toggleAll}
-                   />
-                  <span>{t('input.selectAll')}</span>
-                </Label>
+                    checked={isAllSelected}
+                    onCheckedChange={toggleAll}
+                    aria-checked={isIndeterminate ? 'mixed' : isAllSelected}
+                  />
+                  <Label className="text-xs text-gray-600">{t('input.selectAll')}</Label>
+                </div>
+
+                {/* 具体模型复选框列表 */}
+                <div className="flex items-center gap-2 flex-wrap">
+                  {availableProviders.map((p) => (
+                    <label key={p.id} className="flex items-center gap-1 text-xs bg-gray-50 px-2 py-1 rounded-md border border-gray-200">
+                      <Checkbox checked={!!selected[p.id]} onCheckedChange={() => toggle(p.id)} />
+                      <span className="truncate max-w-[120px]">{p.name || p.id}</span>
+                    </label>
+                  ))}
+                </div>
               </>
             )}
-
-            {/* 各个模型的勾选 */}
-            <div className="flex flex-wrap gap-3">
-              {providers.map((p) => {
-                const disabled = !loadedSet.has(p.id);
-                const checked = !!selected[p.id];
-                return (
-                  <Label
-                    key={p.id}
-                    className={`inline-flex items-center gap-2 text-sm cursor-pointer ${
-                      disabled ? 'opacity-50 cursor-not-allowed' : ''
-                    }`}
-                  >
-                    <Checkbox
-                      disabled={disabled}
-                      checked={checked}
-                      onCheckedChange={() => toggle(p.id)}
-                    />
-                    <span>{p.name}</span>
-                  </Label>
-                );
-              })}
-              {providers.length === 0 && (
-                <span className="text-sm text-gray-500">{t('input.addAiPrompt')}</span>
-              )}
-            </div>
           </div>
 
-          {/* 圆形发送按钮 */}
-          <button
-            type="button"
-            onClick={() => setCollapsed((v) => !v)}
-            className="w-8 h-8 rounded-full flex items-center justify-center transition-all duration-200 bg-gray-100 hover:bg-gray-200 text-gray-700"
-            aria-label="折叠输入框"
-          >
-            <CollapseIcon collapsed={collapsed} />
-          </button>
-          <button
-            type="button"
-            onClick={send}
-            disabled={!canSend}
-            className={`
-              ml-3 w-10 h-10 rounded-full flex items-center justify-center transition-all duration-200
-              ${canSend
-                ? 'bg-blue-500 hover:bg-blue-600 text-white shadow-md hover:shadow-lg'
-                : 'bg-gray-300 text-gray-500 cursor-not-allowed'
-              }
-            `}
-          >
-            {loading ? (
-              <RectIcon />
-            ) : (
-              <SendIcon />
-            )}
-          </button>
+          {/* 右侧发送与折叠 */}
+          <div className="flex items-center gap-2">
+            <button
+              type="button"
+              onClick={() => setCollapsed(!collapsed)}
+              className="h-8 w-8 rounded-md bg-gray-100 hover:bg-gray-200 flex items-center justify-center"
+              aria-label={collapsed ? t('input.expand') : t('input.collapse')}
+            >
+              <CollapseIcon collapsed={collapsed} />
+            </button>
+
+            <button
+              type="button"
+              onClick={send}
+              disabled={!canSend}
+              className={`
+                ml-3 w-10 h-10 rounded-full flex items-center justify-center transition-all duration-200
+                ${canSend
+                  ? 'bg-blue-500 hover:bg-blue-600 text-white shadow-md hover:shadow-lg'
+                  : 'bg-gray-300 text-gray-500 cursor-not-allowed'
+                }
+              `}
+            >
+              {loading ? (
+                <RectIcon />
+              ) : (
+                <SendIcon />
+              )}
+            </button>
+
+
+          </div>
         </div>
       </div>
-
     </div>
   );
 }
