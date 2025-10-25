@@ -11,8 +11,10 @@
   "layout": {
     "tabs": "标签",
     "grid": "网格",
+    "groups": "分组",
     "tabsTitle": "标签视图",
-    "gridTitle": "网格视图"
+    "gridTitle": "网格视图",
+    "groupsTitle": "分组视图"
   },
   "settings": {
     "manageModels": "模型管理",
@@ -23,7 +25,26 @@
     "clearing": "清除中...",
     "clearCache": "清除缓存",
     "cacheCleared": "已清除 {{name}} 的缓存",
-    "cacheClearFailed": "清除 {{name}} 缓存失败"
+    "cacheClearFailed": "清除 {{name}} 缓存失败",
+    "labelsMode": "标签模式",
+    "groupsMode": "分组模式",
+    "groups": {
+      "title": "分组管理",
+      "new": "新建分组",
+      "createPresets": "重置",
+      "confirmReset": "此操作会覆盖现有分组，确认重置吗？",
+      "name": "分组名称",
+      "namePlaceholder": "例如：写作助手组合",
+      "models": "包含的模型",
+      "noProviders": "暂无已启用的模型",
+      "empty": "暂无分组，点击“新建分组”创建",
+      "saved": "分组已保存",
+      "saveFailed": "保存分组失败",
+      "deleted": "分组已删除",
+      "deleteFailed": "删除分组失败",
+      "count": "{{count}} 个模型",
+      "nameRequired": "请填写分组名称"
+    }
   },
   "status": {
     "generating": "生成中..."
@@ -55,7 +76,9 @@
   "actions": {
     "cancel": "取消",
     "save": "保存",
-    "add": "添加"
+    "add": "添加",
+    "edit": "编辑",
+    "delete": "删除"
   },
   "devtools": {
     "inspectElement": "检查元素"

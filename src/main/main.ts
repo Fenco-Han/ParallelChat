@@ -21,6 +21,7 @@ import enMenu from '../shared/locales/en/menu.json';
 import zhCommon from '../shared/locales/zh-CN/common.json';
 import zhMenu from '../shared/locales/zh-CN/menu.json';
 import { promises as fs } from 'fs';
+import { PROVIDER_CATALOG } from '../shared/providers';
 
 class AppUpdater {
   constructor() {
@@ -168,6 +169,41 @@ const createWindow = async () => {
           store.set('layout', { mode: 'tabs', order });
         }
       } catch {}
+
+      // 首次运行：若未应用预设且分组为空，则创建预设分组
+      try {
+        const applied = (store.get('presetsApplied') as boolean | undefined) === true;
+        if (!applied) {
+          const existingGroups = (store.get('aiGroups') as StoreSchema['aiGroups'] | undefined) ?? [];
+          if (!Array.isArray(existingGroups) || existingGroups.length === 0) {
+            const providers = getProviders();
+            const enabledIds = new Set(providers.map((p) => p.id));
+            const presets = [
+              { id: 'group-dqg', name: 'DeepSeek|Qwen|GLM', ids: ['deepseek','qwen','glm'] },
+              { id: 'group-kdy', name: 'Kimi|Doubao|Yuanbao', ids: ['kimi','doubao','yuanbao'] },
+              { id: 'group-ccg', name: 'ChatGPT|Claude|Grok', ids: ['chatgpt','claude','grok'] },
+            ];
+            const created = presets
+              .map((c) => ({ id: c.id, name: c.name, modelIds: c.ids.filter((x) => enabledIds.has(x)) }))
+              .filter((c) => c.modelIds.length > 0);
+            if (created.length > 0) {
+              const next = [...created];
+              try { store.set('aiGroups', next as any); } catch {}
+              // 更新 groupOrder：以现有顺序优先，补充新分组
+              const layout = (store.get('layout') as StoreSchema['layout'] | undefined) ?? { mode: 'tabs', order: providers.map((p) => p.id) };
+              const existingOrder: string[] = Array.isArray(layout?.groupOrder) ? (layout.groupOrder as string[]) : [];
+              const unionOrder = [
+                ...existingOrder.filter((gid: string) => next.some((g) => g.id === gid)),
+                ...next.map((g) => g.id).filter((gid) => !existingOrder.includes(gid)),
+              ];
+              try { store.set('layout', { ...layout, groupOrder: unionOrder } as any); } catch {}
+              try { mainWindow?.webContents.send('parallelchat/groups/reload'); } catch {}
+            }
+          }
+          try { store.set('presetsApplied', true as any); } catch {}
+        }
+      } catch {}
+
       mainWindow?.webContents.send('parallelchat/ai/ready', {
         ids: Array.from(viewsRegistry.keys()),
       });
@@ -252,13 +288,25 @@ type StoreSchema = {
   }>;
 
   /**
+   * 分组配置：用于分组模式下的模型组合
+   * - id：分组唯一标识
+   * - name：分组名称
+   * - modelIds：该分组包含的模型 id 列表
+   */
+  aiGroups?: Array<{ id: string; name: string; modelIds: string[] }>;
+
+  /**
    * 工作区布局状态：模式与视图顺序
-   * - mode：'grid'（并行视图）或 'tabs'（标签聚焦）
-   * - order：视图顺序（元素为 AI id），用于网格定位或标签排序
+   * - mode：'groups'（分组并排）或 'tabs'（标签聚焦）
+   * - order：标签模式下的视图顺序（元素为 AI id）
+   * - groupOrder：分组模式下的分组顺序（元素为分组 id）
+   * - activeGroupId：分组模式下的当前分组 id
    */
   layout?: {
-    /** 布局模式：并行网格或标签页 */ mode: 'grid' | 'tabs';
-    /** 视图顺序：与 aiProviders 的 id 对齐 */ order: string[];
+    /** 布局模式：分组或标签页 */ mode: 'groups' | 'tabs';
+    /** 标签模式：视图顺序，与 aiProviders 的 id 对齐 */ order?: string[];
+    /** 分组模式：分组顺序 */ groupOrder?: string[];
+    /** 分组模式：当前激活分组 */ activeGroupId?: string;
   };
 
   /**
@@ -267,6 +315,11 @@ type StoreSchema = {
    * - true：不再触发引导
    */
   hasOnboarded?: boolean;
+  /**
+   * 预设分组是否已在首次启动时创建
+   * - true：不再自动创建
+   */
+  presetsApplied?: boolean;
   /** 应用设置：语言等 */
   settings?: {
     /** 当前语言 */ language?: 'en' | 'zh-CN';
@@ -333,6 +386,7 @@ const allowedKeys: Array<keyof StoreSchema> = [
   'sessions',
   'activeSessionId',
   'aiProviders',
+  'aiGroups',
   'layout',
   'hasOnboarded',
   'settings',
@@ -852,23 +906,34 @@ function createAiView(ai: AiProvider): WebContentsView {
 
 function syncAiViews() {
   const providers = (store.get('aiProviders') as AiProvider[] | undefined) ?? [];
-  const ids = new Set(providers.map((p) => p.id));
+  const layout = (store.get('layout') as StoreSchema['layout'] | undefined) ?? {};
+  const groups = (store.get('aiGroups') as Array<{ id: string; name?: string; modelIds: string[] }> | undefined) ?? [];
+  const ids = new Set<string>(providers.map((p) => p.id));
 
-  // 移除不再存在的视图
+  // 在分组模式下，确保活动分组的模型也被创建视图（不依赖标签模式）
+  if ((layout?.mode ?? 'tabs') === 'groups') {
+    const activeGroupId = layout?.activeGroupId ?? (layout?.groupOrder && layout.groupOrder[0]) ?? (groups[0]?.id);
+    const activeGroup = groups.find((g) => g.id === activeGroupId);
+    if (activeGroup?.modelIds?.length) {
+      for (const id of activeGroup.modelIds) ids.add(id);
+    }
+  }
+
+  // 移除不再需要的视图
   for (const [id, view] of viewsRegistry.entries()) {
     if (!ids.has(id)) {
-      try {
-        mainWindow?.contentView.removeChildView(view);
-      } catch {}
+      try { mainWindow?.contentView.removeChildView(view); } catch {}
       viewsRegistry.delete(id);
     }
   }
 
-  // 新增缺失的视图
-  for (const p of providers) {
-    if (!viewsRegistry.has(p.id)) {
+  // 新增缺失的视图（优先来自存储，其次来自内置目录）
+  for (const id of ids) {
+    if (!viewsRegistry.has(id)) {
+      const p = providers.find((x) => x.id === id) || PROVIDER_CATALOG.find((x) => x.id === id);
+      if (!p) continue;
       const v = createAiView(p);
-      viewsRegistry.set(p.id, v);
+      viewsRegistry.set(id, v);
     }
   }
 
@@ -914,21 +979,21 @@ function applyLayout() {
     return;
   }
 
-  // grid：简单等分为列
-  const count = orderedProviders.length;
+  // groups：按活动分组的模型并排布局
+  const groups = (store.get('aiGroups') as Array<{ id: string; name: string; modelIds: string[] }> | undefined) ?? [];
+  const activeGroupId = layout?.activeGroupId ?? (layout?.groupOrder && layout.groupOrder[0]) ?? (groups[0]?.id);
+  const activeGroup = groups.find((g) => g.id === activeGroupId) ?? groups[0];
+  if (!activeGroup || !Array.isArray(activeGroup.modelIds) || activeGroup.modelIds.length === 0) return;
+  const visibleModelIds = activeGroup.modelIds.filter((id) => viewsRegistry.has(id));
+  const count = visibleModelIds.length;
   if (count === 0) return;
   const colWidth = Math.floor(workspaceBounds.width / count);
   let x = workspaceBounds.x;
-  for (const p of orderedProviders) {
-    const v = viewsRegistry.get(p.id);
+  for (const id of visibleModelIds) {
+    const v = viewsRegistry.get(id);
     if (!v) continue;
     mainWindow.contentView.addChildView(v);
-    v.setBounds({
-      x,
-      y: safeY,
-      width: colWidth,
-      height: safeHeight,
-    });
+    v.setBounds({ x, y: safeY, width: colWidth, height: safeHeight });
     x += colWidth;
   }
 }
@@ -940,10 +1005,10 @@ ipcMain.on('parallelchat/workspace/bounds', (_e, bounds: { x: number; y: number;
 });
 
 // 切换布局模式
-ipcMain.on('parallelchat/layout/set', (_e, mode: 'grid' | 'tabs') => {
+ipcMain.on('parallelchat/layout/set', (_e, mode: 'groups' | 'tabs') => {
   const current = (store.get('layout') as StoreSchema['layout'] | undefined) ?? { order: [] };
   store.set('layout', { ...current, mode });
-  applyLayout();
+  syncAiViews();
 });
 
 // 设置标签模式的激活视图：将目标 id 置于顺序首位
@@ -958,6 +1023,22 @@ ipcMain.on('parallelchat/layout/active', (_e, id: string) => {
   const nextOrder = [id, ...current.order.filter((x) => x !== id)];
   store.set('layout', { ...current, order: nextOrder });
   applyLayout();
+});
+
+// 设置分组模式的激活分组：更新 activeGroupId 并应用布局
+ipcMain.on('parallelchat/layout/group/active', (_e, groupId: string) => {
+  const groups = ((store.get('aiGroups') as Array<{ id: string }> | undefined) ?? []) as Array<{ id: string }>;
+  const idSet = new Set(groups.map((g) => g.id));
+  if (!idSet.has(groupId)) return;
+  const current = (store.get('layout') as StoreSchema['layout'] | undefined) ?? { mode: 'groups', groupOrder: groups.map((g) => g.id) };
+  store.set('layout', { ...current, activeGroupId: groupId });
+  syncAiViews();
+});
+
+// 依据最新分组刷新布局（供设置页使用）
+ipcMain.on('parallelchat/groups/reload', () => {
+  try { syncAiViews(); } catch {}
+  try { mainWindow?.webContents.send('parallelchat/groups/reload'); } catch {}
 });
 
 // 依据最新 aiProviders 同步视图（供后续设置页使用）

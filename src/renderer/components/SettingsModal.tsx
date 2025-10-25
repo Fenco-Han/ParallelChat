@@ -8,10 +8,10 @@ import {
   DialogTitle,
 } from './ui/dialog';
 import { Card, CardContent, CardAction, CardTitle } from './ui/card';
-import { Separator } from './ui/separator';
 import { Switch } from './ui/switch';
 import { toast } from 'sonner';
 import { useTranslation } from 'react-i18next';
+import { Tabs, TabsList, TabsTrigger, TabsContent } from './ui/tabs';
 
 type AiProvider = { id: string; name: string; url: string; handler?: string };
 
@@ -86,10 +86,28 @@ export default function SettingsModal({
   onClose: () => void;
 }) {
   const { t } = useTranslation();
+  const [settingsTab, setSettingsTab] = useState<'labels' | 'groups'>('labels');
   const [providers, setProviders] = useState<AiProvider[]>([]);
   const [enabled, setEnabled] = useState<Record<string, boolean>>({});
   const [saving, setSaving] = useState(false);
   const [clearingOne, setClearingOne] = useState<Record<string, boolean>>({});
+
+  const clearOne = async (id: string) => {
+    setClearingOne((prev) => ({ ...prev, [id]: true }));
+    try {
+      await window.parallelchat?.invoke('parallelchat/cache/clear', id);
+    } catch {}
+    setClearingOne((prev) => ({ ...prev, [id]: false }));
+  };
+
+  type AiGroup = { id: string; name: string; modelIds: string[] };
+  const [groups, setGroups] = useState<AiGroup[]>([]);
+  const [creating, setCreating] = useState(false);
+  const [newGroupName, setNewGroupName] = useState('');
+  const [newGroupModels, setNewGroupModels] = useState<Set<string>>(new Set());
+  const [editingId, setEditingId] = useState<string | null>(null);
+  const [editingName, setEditingName] = useState('');
+  const [editingModels, setEditingModels] = useState<Set<string>>(new Set());
 
   useEffect(() => {
     if (!open) return;
@@ -114,13 +132,20 @@ export default function SettingsModal({
         });
         setEnabled(map);
       }
+
+      try {
+        const g = (await window.parallelchat?.invoke('parallelchat/store/get', 'aiGroups')) as AiGroup[] | undefined;
+        setGroups(g ?? []);
+      } catch {
+        setGroups([]);
+      }
     })();
   }, [open]);
 
   const toggleEnable = (id: string) =>
     setEnabled((prev) => ({ ...prev, [id]: !prev[id] }));
 
-  const save = async () => {
+  const saveProviders = async () => {
     setSaving(true);
     const next = PRESET_AI.filter((p) => enabled[p.id]);
     try {
@@ -129,31 +154,128 @@ export default function SettingsModal({
         'aiProviders',
         next,
       );
-    } catch {
-      // Handle error silently
-    }
+    } catch {}
     try {
       window.parallelchat?.send('parallelchat/ai/reload');
-    } catch {
-      // Handle error silently
-    }
+    } catch {}
     setSaving(false);
     onClose();
   };
 
-  const clearOne = async (id: string) => {
-    setClearingOne((prev) => ({ ...prev, [id]: true }));
+  const startCreate = () => {
+    setCreating(true);
+    setNewGroupName('');
+    setNewGroupModels(new Set());
+  };
+  const cancelCreate = () => {
+    setCreating(false);
+    setNewGroupName('');
+    setNewGroupModels(new Set());
+  };
+  const toggleNewGroupModel = (id: string) => {
+    setNewGroupModels((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id); else next.add(id);
+      return next;
+    });
+  };
+  const createGroup = async () => {
+    const name = newGroupName.trim();
+    if (!name) {
+      toast.error(t('settings.groups.nameRequired'));
+      return;
+    }
+    const id = `group-${Date.now()}-${Math.floor(Math.random()*10000)}`;
+    const next: AiGroup[] = [...groups, { id, name, modelIds: Array.from(newGroupModels) }];
     try {
-      window.parallelchat?.send('parallelchat/cache/clear', id);
-      toast.success(t('settings.cacheCleared', { name: PRESET_AI.find((p) => p.id === id)?.name }));
+      await window.parallelchat?.invoke('parallelchat/store/set', 'aiGroups', next);
+      window.parallelchat?.send('parallelchat/groups/reload');
+      setGroups(next);
+      toast.success(t('settings.groups.saved'));
+      cancelCreate();
+      onClose();
     } catch {
-      toast.error(t('settings.cacheClearFailed', { name: PRESET_AI.find((p) => p.id === id)?.name }));
-    } finally {
-      setClearingOne((prev) => ({ ...prev, [id]: false }));
+      toast.error(t('settings.groups.saveFailed'));
     }
   };
 
+  const startEdit = (g: AiGroup) => {
+    setEditingId(g.id);
+    setEditingName(g.name);
+    setEditingModels(new Set(g.modelIds));
+  };
+  const cancelEdit = () => {
+    setEditingId(null);
+    setEditingName('');
+    setEditingModels(new Set());
+  };
+  const toggleEditModel = (id: string) => {
+    setEditingModels((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id); else next.add(id);
+      return next;
+    });
+  };
+  const saveEdit = async () => {
+    if (!editingId) return;
+    const name = editingName.trim();
+    if (!name) {
+      toast.error(t('settings.groups.nameRequired'));
+      return;
+    }
+    const next = groups.map((g) => g.id === editingId ? { ...g, name, modelIds: Array.from(editingModels) } : g);
+    try {
+      await window.parallelchat?.invoke('parallelchat/store/set', 'aiGroups', next);
+      window.parallelchat?.send('parallelchat/groups/reload');
+      setGroups(next);
+      toast.success(t('settings.groups.saved'));
+      cancelEdit();
+      onClose();
+    } catch {
+      toast.error(t('settings.groups.saveFailed'));
+    }
+  };
+  const deleteGroup = async (id: string) => {
+    const next = groups.filter((g) => g.id !== id);
+    try {
+      await window.parallelchat?.invoke('parallelchat/store/set', 'aiGroups', next);
+      window.parallelchat?.send('parallelchat/groups/reload');
+      setGroups(next);
+      toast.success(t('settings.groups.deleted'));
+      if (editingId === id) cancelEdit();
+      onClose();
+    } catch {
+      toast.error(t('settings.groups.deleteFailed'));
+    }
+  };
 
+  // 重置为预设分组（覆盖现有分组）：DeepSeek|Qwen|GLM；Kimi|Doubao|Yuanbao；ChatGPT|Claude|Grok
+  const createPresetGroups = async () => {
+    if (typeof window !== 'undefined') {
+      const ok = window.confirm(t('settings.groups.confirmReset') as string);
+      if (!ok) return;
+    }
+    const presets = [
+      { id: 'group-dqg', name: 'DeepSeek|Qwen|GLM', ids: ['deepseek','qwen','glm'] },
+      { id: 'group-kdy', name: 'Kimi|Doubao|Yuanbao', ids: ['kimi','doubao','yuanbao'] },
+      { id: 'group-ccg', name: 'ChatGPT|Claude|Grok', ids: ['chatgpt','claude','grok'] },
+    ];
+    const created = presets.map((c) => ({ id: c.id, name: c.name, modelIds: c.ids }));
+    const next = [...created];
+    try {
+      await window.parallelchat?.invoke('parallelchat/store/set', 'aiGroups', next);
+      // 覆盖 groupOrder 为预设分组顺序
+      const layout = (await window.parallelchat?.invoke('parallelchat/store/get', 'layout')) as any;
+      const order = next.map((g) => g.id);
+      await window.parallelchat?.invoke('parallelchat/store/set', 'layout', { ...layout, groupOrder: order });
+      window.parallelchat?.send('parallelchat/groups/reload');
+      setGroups(next);
+      toast.success(t('settings.groups.saved'));
+      onClose();
+    } catch {
+      toast.error(t('settings.groups.saveFailed'));
+    }
+  };
 
   return (
     <Dialog open={open} onOpenChange={(v) => !v && onClose()}>
@@ -166,56 +288,171 @@ export default function SettingsModal({
           {t('settings.securityNote')}
         </div>
 
-        <div>
-          <div className="font-medium mb-3">{t('settings.aiManagement')}</div>
-          {Object.values(enabled).filter(Boolean).length > 3 && (
-            <div className="mb-2 text-xs text-muted-foreground">
-              {t('settings.recommendTabsLayout')}
+        <Tabs value={settingsTab} onValueChange={(v) => setSettingsTab(v as 'labels' | 'groups')}>
+          <TabsList>
+            <TabsTrigger value="labels">{t('settings.labelsMode')}</TabsTrigger>
+            <TabsTrigger value="groups">{t('settings.groupsMode')}</TabsTrigger>
+          </TabsList>
+
+          <TabsContent value="labels">
+            <div>
+              <div className="font-medium mb-3">{t('settings.aiManagement')}</div>
+              {Object.values(enabled).filter(Boolean).length > 3 && (
+                <div className="mb-2 text-xs text-muted-foreground">
+                  {t('settings.recommendTabsLayout')}
+                </div>
+              )}
+              <div className="grid grid-cols-2 gap-3">
+                {PRESET_AI.map((p) => (
+                  <Card key={p.id} className="py-3">
+                    <CardContent className="flex items-center justify-between px-4">
+                      <div className="flex-1 min-w-0">
+                        <CardTitle className="text-base truncate">
+                          {p.name}
+                        </CardTitle>
+                        <div className="text-xs text-muted-foreground truncate">
+                          {p.url}
+                        </div>
+                      </div>
+                      <CardAction className="flex items-center gap-2 ml-3">
+                        <div className="flex items-center gap-2">
+                          <span className="text-sm text-muted-foreground">{t('settings.enable')}</span>
+                          <Switch
+                            checked={!!enabled[p.id]}
+                            onCheckedChange={() => toggleEnable(p.id)}
+                          />
+                        </div>
+                        <Button
+                          variant="secondary"
+                          size="sm"
+                          onClick={() => clearOne(p.id)}
+                          disabled={!enabled[p.id] || clearingOne[p.id]}
+                        >
+                          {clearingOne[p.id] ? t('settings.clearing') : t('settings.clearCache')}
+                        </Button>
+                      </CardAction>
+                    </CardContent>
+                  </Card>
+                ))}
+              </div>
             </div>
-          )}
-          <div className="grid grid-cols-2 gap-3">
-            {PRESET_AI.map((p) => (
-              <Card key={p.id} className="py-3">
-                <CardContent className="flex items-center justify-between px-4">
-                  <div className="flex-1 min-w-0">
-                    <CardTitle className="text-base truncate">
-                      {p.name}
-                    </CardTitle>
-                    <div className="text-xs text-muted-foreground truncate">
-                      {p.url}
-                    </div>
-                  </div>
-                  <CardAction className="flex items-center gap-2 ml-3">
-                    <div className="flex items-center gap-2">
-                      <span className="text-sm text-muted-foreground">{t('settings.enable')}</span>
-                      <Switch
-                        checked={!!enabled[p.id]}
-                        onCheckedChange={() => toggleEnable(p.id)}
+          </TabsContent>
+
+          <TabsContent value="groups">
+            <div>
+              <div className="flex items-center justify-between mb-3">
+                <div className="font-medium">{t('settings.groups.title')}</div>
+                <div className="flex items-center gap-2">
+                  <Button size="sm" variant="secondary" onClick={createPresetGroups}>{t('settings.groups.createPresets')}</Button>
+                  {!creating && (
+                    <Button size="sm" onClick={startCreate}>{t('settings.groups.new')}</Button>
+                  )}
+                </div>
+              </div>
+
+              {creating && (
+                <Card className="mb-4">
+                  <CardContent className="px-4 py-3 space-y-3">
+                    <div>
+                      <div className="text-sm mb-1">{t('settings.groups.name')}</div>
+                      <input
+                        className="w-full h-8 px-2 border rounded-md"
+                        value={newGroupName}
+                        onChange={(e) => setNewGroupName(e.target.value)}
+                        placeholder={t('settings.groups.namePlaceholder') as string}
                       />
                     </div>
-                    <Button
-                      variant="secondary"
-                      size="sm"
-                      onClick={() => clearOne(p.id)}
-                      disabled={!enabled[p.id] || clearingOne[p.id]}
-                    >
-                      {clearingOne[p.id] ? t('settings.clearing') : t('settings.clearCache')}
-                    </Button>
-                  </CardAction>
-                </CardContent>
-              </Card>
-            ))}
-          </div>
-        </div>
+                    <div>
+                      <div className="text-sm mb-1">{t('settings.groups.models')}</div>
+                      <div className="grid grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-1.5">
+                        {PRESET_AI.map((p) => (
+                          <label key={p.id} className="flex items-center gap-1 text-xs">
+                            <input
+                              type="checkbox"
+                              checked={newGroupModels.has(p.id)}
+                              onChange={() => toggleNewGroupModel(p.id)}
+                            />
+                            <span className="truncate">{p.name || p.id}</span>
+                          </label>
+                        ))}
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-2 justify-end">
+                      <Button onClick={createGroup}>{t('actions.save')}</Button>
+                      <Button variant="ghost" onClick={cancelCreate}>{t('actions.cancel')}</Button>
+                    </div>
+                  </CardContent>
+                </Card>
+              )}
 
+              {groups.length === 0 && !creating && (
+                <div className="text-sm text-muted-foreground">{t('settings.groups.empty')}</div>
+              )}
+
+              <div className="space-y-2">
+                {groups.map((g) => (
+                  <Card key={g.id}>
+                    <CardContent className="px-4 py-3">
+                      {editingId === g.id ? (
+                        <div className="space-y-3">
+                          <div>
+                            <div className="text-sm mb-1">{t('settings.groups.name')}</div>
+                            <input
+                              className="w-full h-8 px-2 border rounded-md"
+                              value={editingName}
+                              onChange={(e) => setEditingName(e.target.value)}
+                            />
+                          </div>
+                          <div>
+                            <div className="text-sm mb-1">{t('settings.groups.models')}</div>
+                            <div className="grid grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-1.5">
+                              {PRESET_AI.map((p) => (
+                                <label key={p.id} className="flex items-center gap-1 text-xs">
+                                  <input
+                                    type="checkbox"
+                                    checked={editingModels.has(p.id)}
+                                    onChange={() => toggleEditModel(p.id)}
+                                  />
+                                  <span className="truncate">{p.name || p.id}</span>
+                                </label>
+                              ))}
+                            </div>
+                          </div>
+                          <div className="flex items-center gap-2 justify-end">
+                            <Button size="sm" onClick={saveEdit}>{t('actions.save')}</Button>
+                            <Button variant="ghost" size="sm" onClick={cancelEdit}>{t('actions.cancel')}</Button>
+                            <Button variant="destructive" size="sm" onClick={() => deleteGroup(g.id)}>{t('actions.delete')}</Button>
+                          </div>
+                        </div>
+                      ) : (
+                        <div className="flex items-center justify-between">
+                          <div>
+                            <div className="font-medium">{g.name}</div>
+                            <div className="text-xs text-muted-foreground">{t('settings.groups.count', { count: g.modelIds.length })}</div>
+                          </div>
+                          <div className="flex items-center gap-2">
+                            <Button size="sm" variant="secondary" onClick={() => startEdit(g)}>{t('actions.edit')}</Button>
+                            <Button size="sm" variant="destructive" onClick={() => deleteGroup(g.id)}>{t('actions.delete')}</Button>
+                          </div>
+                        </div>
+                      )}
+                    </CardContent>
+                  </Card>
+                ))}
+              </div>
+            </div>
+          </TabsContent>
+        </Tabs>
 
         <DialogFooter>
           <Button variant="ghost" onClick={onClose} disabled={saving}>
             {t('actions.cancel')}
           </Button>
-          <Button onClick={save} disabled={saving}>
-            {t('actions.save')}
-          </Button>
+          {settingsTab === 'labels' && (
+            <Button onClick={saveProviders} disabled={saving}>
+              {t('actions.save')}
+            </Button>
+          )}
         </DialogFooter>
       </DialogContent>
     </Dialog>

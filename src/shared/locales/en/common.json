@@ -11,8 +11,10 @@
   "layout": {
     "tabs": "Tabs",
     "grid": "Grid",
+    "groups": "Groups",
     "tabsTitle": "Tabs view",
-    "gridTitle": "Grid view"
+    "gridTitle": "Grid view",
+    "groupsTitle": "Groups view"
   },
   "settings": {
     "manageModels": "Model Management",
@@ -23,7 +25,26 @@
     "clearing": "Clearing...",
     "clearCache": "Clear Cache",
     "cacheCleared": "Cleared {{name}} cache",
-    "cacheClearFailed": "Failed to clear {{name}} cache"
+    "cacheClearFailed": "Failed to clear {{name}} cache",
+    "labelsMode": "Tabs Mode",
+    "groupsMode": "Groups Mode",
+    "groups": {
+      "title": "Group Management",
+      "new": "New Group",
+      "createPresets": "Reset",
+      "confirmReset": "This will overwrite existing groups. Proceed?",
+      "name": "Group Name",
+      "namePlaceholder": "e.g. Writing Assistants",
+      "models": "Included Models",
+      "noProviders": "No enabled models",
+      "empty": "No groups yet, click New Group to create",
+      "saved": "Group saved",
+      "saveFailed": "Failed to save group",
+      "deleted": "Group deleted",
+      "deleteFailed": "Failed to delete group",
+      "count": "{{count}} models",
+      "nameRequired": "Please enter a group name"
+    }
   },
   "status": {
     "generating": "Generating..."
@@ -55,7 +76,9 @@
   "actions": {
     "cancel": "Cancel",
     "save": "Save",
-    "add": "Add"
+    "add": "Add",
+    "edit": "Edit",
+    "delete": "Delete"
   },
   "devtools": {
     "inspectElement": "Inspect element"

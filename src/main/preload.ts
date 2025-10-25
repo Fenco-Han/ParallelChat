@@ -13,6 +13,8 @@ export type Channels =
   | 'parallelchat/broadcast'
   | 'parallelchat/layout/set'
   | 'parallelchat/layout/active'
+  | 'parallelchat/layout/group/active'
+  | 'parallelchat/groups/reload'
   | 'parallelchat/workspace/bounds'
   | 'parallelchat/ai/reload'
   | 'parallelchat/ai/ready'
