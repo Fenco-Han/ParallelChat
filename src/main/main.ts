@@ -177,15 +177,12 @@ const createWindow = async () => {
           const existingGroups = (store.get('aiGroups') as StoreSchema['aiGroups'] | undefined) ?? [];
           if (!Array.isArray(existingGroups) || existingGroups.length === 0) {
             const providers = getProviders();
-            const enabledIds = new Set(providers.map((p) => p.id));
             const presets = [
               { id: 'group-dqg', name: 'DeepSeek · Qwen · GLM', ids: ['deepseek','qwen','glm'] },
               { id: 'group-kdy', name: 'Kimi · Doubao · Yuanbao', ids: ['kimi','doubao','yuanbao'] },
               { id: 'group-ccg', name: 'ChatGPT · Claude · Grok', ids: ['chatgpt','claude','grok'] },
             ];
-            const created = presets
-              .map((c) => ({ id: c.id, name: c.name, modelIds: c.ids.filter((x) => enabledIds.has(x)) }))
-              .filter((c) => c.modelIds.length > 0);
+            const created = presets.map((c) => ({ id: c.id, name: c.name, modelIds: c.ids }));
             if (created.length > 0) {
               const next = [...created];
               try { store.set('aiGroups', next as any); } catch {}
