@@ -78,7 +78,8 @@
     "save": "Save",
     "add": "Add",
     "edit": "Edit",
-    "delete": "Delete"
+    "delete": "Delete",
+    "copy": "Copy"
   },
   "devtools": {
     "inspectElement": "Inspect element"
@@ -92,6 +93,24 @@
     "title": "Add AI Assistant",
     "added": "Added",
     "clickToSelect": "Click to select"
+  },
+  "prompts": {
+    "manageTitle": "Manage Prompts",
+    "localNote": "Prompts are stored locally (localStorage) and never uploaded.",
+    "listTitle": "Prompt List",
+    "new": "New Prompt",
+    "titleLabel": "Title",
+    "titlePlaceholder": "Optional; defaults to first line",
+    "contentLabel": "Content",
+    "contentPlaceholder": "Enter prompt content",
+    "empty": "No prompts yet. Click New to add.",
+    "saved": "Prompt saved",
+    "updated": "Changes saved",
+    "deleted": "Deleted",
+    "copySuccess": "Copied to clipboard",
+    "copyFailed": "Copy failed",
+    "contentRequired": "Content cannot be empty",
+    "untitled": "Untitled Prompt"
   },
   "workspace": {
     "emptyTitle": "No models added yet",

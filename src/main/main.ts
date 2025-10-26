@@ -1127,12 +1127,21 @@ function truncateTitle(title: string): string {
 
 function resetViewsToDefaults() {
   try {
-    const providers = getProviders();
+    // 确保视图与布局已同步（包括分组模式下的并集视图）
     syncAiViews();
-    for (const p of providers) {
-      const v = viewsRegistry.get(p.id);
+    const ids = Array.from(viewsRegistry.keys());
+    const configured = getProviders();
+    for (const id of ids) {
+      const v = viewsRegistry.get(id);
       if (!v) continue;
-      try { v.webContents.loadURL(p.url); } catch {}
+      // 优先使用用户配置的 provider，其次回退到内置目录
+      const p = configured.find((x) => x.id === id) || PROVIDER_CATALOG.find((x) => x.id === id);
+      if (p && p.url) {
+        try { v.webContents.loadURL(p.url); } catch {}
+      } else {
+        // 若未找到默认URL，回退为普通刷新
+        try { v.webContents.reload(); } catch {}
+      }
     }
     applyLayout();
   } catch {}

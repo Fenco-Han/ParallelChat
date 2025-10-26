@@ -78,7 +78,8 @@
     "save": "保存",
     "add": "添加",
     "edit": "编辑",
-    "delete": "删除"
+    "delete": "删除",
+    "copy": "复制"
   },
   "devtools": {
     "inspectElement": "检查元素"
@@ -92,6 +93,24 @@
     "title": "添加AI助手",
     "added": "已添加",
     "clickToSelect": "点击选择"
+  },
+  "prompts": {
+    "manageTitle": "管理提示词",
+    "localNote": "提示词保存在本地（localStorage），不会上传到网络。",
+    "listTitle": "提示词列表",
+    "new": "新建提示词",
+    "titleLabel": "标题",
+    "titlePlaceholder": "可选，不填则取首行",
+    "contentLabel": "内容",
+    "contentPlaceholder": "输入提示词内容",
+    "empty": "暂无提示词，点击右上角“新建”添加。",
+    "saved": "已保存提示词",
+    "updated": "已保存修改",
+    "deleted": "已删除",
+    "copySuccess": "已复制到剪贴板",
+    "copyFailed": "复制失败",
+    "contentRequired": "内容不能为空",
+    "untitled": "未命名提示词"
   },
   "workspace": {
     "emptyTitle": "暂未添加模型",

@@ -18,7 +18,10 @@ export default function AppShell() {
   const [activeId, setActiveId] = useState<string | undefined>(undefined);
   const [busyMap, setBusyMap] = useState<Record<string, boolean>>({});
   const [completeSet, setCompleteSet] = useState<Set<string>>(new Set());
-  const [tabMenu, setTabMenu] = useState<{ id: string; x: number; y: number; name?: string } | null>(null);
+  const [tabMenu, setTabMenu] = useState<
+    { id: string; x: number; y: number; name?: string; type: 'provider' | 'group' }
+    | null
+  >(null);
   const [groups, setGroups] = useState<Array<{ id: string; name: string; modelIds: string[] }>>([]);
   const [activeGroupId, setActiveGroupId] = useState<string | undefined>(undefined);
   const [groupOrder, setGroupOrder] = useState<string[]>([]);
@@ -195,7 +198,13 @@ export default function AppShell() {
   const openTabContextMenu = (e: React.MouseEvent, id: string, name?: string) => {
     e.preventDefault();
     e.stopPropagation();
-    setTabMenu({ id, x: e.clientX, y: e.clientY, name });
+    setTabMenu({ id, x: e.clientX, y: e.clientY, name, type: 'provider' });
+  };
+
+  const openGroupContextMenu = (e: React.MouseEvent, id: string, name?: string) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setTabMenu({ id, x: e.clientX, y: e.clientY, name, type: 'group' });
   };
 
   useEffect(() => {
@@ -214,7 +223,17 @@ export default function AppShell() {
   const doReload = () => {
     if (!tabMenu) return;
     try {
-      window.parallelchat?.send('parallelchat/view/reload', tabMenu.id);
+      if (tabMenu.type === 'provider') {
+        window.parallelchat?.send('parallelchat/view/reload', tabMenu.id);
+      } else if (tabMenu.type === 'group') {
+        const g = groups.find((x) => x.id === tabMenu.id);
+        const ids = g?.modelIds ?? [];
+        for (const id of ids) {
+          try {
+            window.parallelchat?.send('parallelchat/view/reload', id);
+          } catch {}
+        }
+      }
     } catch {}
     setTabMenu(null);
   };
@@ -263,7 +282,12 @@ export default function AppShell() {
                     const g = groups.find((x) => x.id === gid);
                     if (!g) return null;
                     return (
-                      <TabsTrigger key={g.id} value={g.id} title={g.name || g.id}>
+                      <TabsTrigger
+                        key={g.id}
+                        value={g.id}
+                        title={g.name || g.id}
+                        onContextMenu={(e) => openGroupContextMenu(e, g.id, g.name || g.id)}
+                      >
                         {g.name || g.id}
                       </TabsTrigger>
                     );

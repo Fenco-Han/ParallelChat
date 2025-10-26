@@ -1,9 +1,10 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { Textarea } from './ui/textarea';
 import { Checkbox } from './ui/checkbox';
 import { Label } from './ui/label';
-import { useTranslation } from 'react-i18next';
 import { PROVIDER_CATALOG } from '../../shared/providers';
+import PromptModal from './PromptModal';
 
 type AiProvider = { id: string; name: string; url: string; handler?: string };
 type AiGroup = { id: string; name: string; modelIds: string[] };
@@ -29,6 +30,7 @@ export default function GlobalInputBar({
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const [collapsed, setCollapsed] = useState(false);
   const [isDragging, setIsDragging] = useState(false);
+  const [promptOpen, setPromptOpen] = useState(false);
 
   type Attachment = { id: string; filePath: string; mime: string; name: string; dataUrl?: string; kind: 'image' | 'file' };
   const [attachments, setAttachments] = useState<Attachment[]>([]);
@@ -290,6 +292,12 @@ export default function GlobalInputBar({
     </svg>
   );
 
+  const PromptIcon = () => (
+    <svg width="18" height="18" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+      <path d="M9 18h6M12 2a7 7 0 0 1 7 7c0 2.386-1.21 4.495-3.04 5.71-.608.414-.96 1.105-.96 1.839V17H9v-.451c0-.734-.352-1.425-.96-1.839A7.001 7.001 0 0 1 5 9a7 7 0 0 1 7-7z" stroke="currentColor" strokeWidth="2" fill="none" strokeLinecap="round" strokeLinejoin="round" />
+    </svg>
+  );
+
   // 移动到组件内部的附件相关函数
   const removeAttachment = (id: string) => {
     setAttachments((prev) => prev.filter(a => a.id !== id));
@@ -518,6 +526,17 @@ export default function GlobalInputBar({
 
           {/* 右侧发送与折叠 */}
           <div className="flex items-center gap-2">
+            {/* 提示词按钮（在折叠按钮左侧） */}
+            <button
+              type="button"
+              onClick={() => setPromptOpen(true)}
+              className="h-8 w-8 rounded-md bg-gray-100 hover:bg-gray-200 flex items-center justify-center"
+              aria-label="提示词"
+              title="提示词"
+            >
+              <PromptIcon />
+            </button>
+
             <button
               type="button"
               onClick={() => setCollapsed(!collapsed)}
@@ -550,6 +569,8 @@ export default function GlobalInputBar({
           </div>
         </div>
       </div>
+      {/* 提示词管理弹窗 */}
+      <PromptModal open={promptOpen} onClose={() => setPromptOpen(false)} />
     </div>
   );
 }
