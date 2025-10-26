@@ -1,13 +1,19 @@
 {
   "name": "parallelchat",
-  "version": "1.0.5",
-  "description": "ParallelChat 桌面应用：并行多模型对话与管理",
+  "version": "1.0.6",
+  "description": "ParallelChat 一次提问，多个AI同时作答",
   "keywords": [
     "desktop",
     "chat",
     "llm",
     "ai",
-    "parallel"
+    "DeepSeek",
+    "Qwen",
+    "GLM",
+    "Kimi",
+    "Doubao",
+    "ChatGPT",
+    "Claude"
   ],
   "homepage": "https://parallelchat.top",
   "bugs": {
