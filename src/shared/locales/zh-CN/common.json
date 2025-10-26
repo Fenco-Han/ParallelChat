@@ -96,5 +96,8 @@
   "workspace": {
     "emptyTitle": "暂未添加模型",
     "emptyDesc": "请在模型管理中添加模型以开始使用 {{app}}。"
+  },
+  "view": {
+    "reload": "刷新"
   }
 }

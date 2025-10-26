@@ -159,6 +159,18 @@ const createWindow = async () => {
   // 在主窗口页面加载完成后，同步并创建已配置的 AI 视图
   mainWindow.webContents.on('did-finish-load', () => {
     try {
+      // 首次启动：若未配置 aiProviders，则默认启用 deepseek、qwen、glm、kimi
+      try {
+        const existing = (store.get('aiProviders') as StoreSchema['aiProviders'] | undefined) ?? [];
+        if (!Array.isArray(existing) || existing.length === 0) {
+          const wanted = new Set(['deepseek', 'qwen', 'glm', 'kimi']);
+          const defaults = PROVIDER_CATALOG.filter((p) => wanted.has(p.id));
+          if (defaults.length > 0) {
+            store.set('aiProviders', defaults as any);
+          }
+        }
+      } catch {}
+
       syncAiViews();
       // 首次启动默认布局为 tabs（若未设置）
       try {

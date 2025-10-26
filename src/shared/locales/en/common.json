@@ -96,5 +96,8 @@
   "workspace": {
     "emptyTitle": "No models added yet",
     "emptyDesc": "Please add models in Model Management to start using {{app}}."
+  },
+  "view": {
+    "reload": "Reload"
   }
 }

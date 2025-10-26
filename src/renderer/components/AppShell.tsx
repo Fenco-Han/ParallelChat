@@ -333,7 +333,7 @@ export default function AppShell() {
             style={{ left: tabMenu.x, top: tabMenu.y }}
             onClick={(e) => e.stopPropagation()}
           >
-           <button className="w-full text-left px-3 py-2 hover:bg-slate-50 rounded-lg transition-colors" onClick={doReload}>{t('menu.view.reload')}</button>
+           <button className="w-full text-left px-3 py-2 hover:bg-slate-50 rounded-lg transition-colors" onClick={doReload}>{t('view.reload')}</button>
           </div>
         )}
       </main>
