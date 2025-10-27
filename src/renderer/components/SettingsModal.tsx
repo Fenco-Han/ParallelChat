@@ -270,9 +270,10 @@ export default function SettingsModal({
       if (!ok) return;
     }
     const presets = [
-      { id: 'group-dqg', name: 'DeepSeek | Qwen | GLM', ids: ['deepseek','qwen','glm'] },
-      { id: 'group-kdy', name: 'Kimi | Doubao | Yuanbao', ids: ['kimi','doubao','yuanbao'] },
-      { id: 'group-ccg', name: 'ChatGPT | Claude | Grok', ids: ['chatgpt','claude','grok'] },
+      { id: 'group-dq', name: 'DeepSeek | Qwen', ids: ['deepseek','qwen'] },
+      { id: 'group-gk', name: 'GLM | Kimi', ids: ['glm','kimi'] },
+      { id: 'group-dy', name: 'Doubao | Yuanbao', ids: ['doubao','yuanbao'] },
+      { id: 'group-cg', name: 'ChatGPT | Grok', ids: ['chatgpt','grok'] },
     ];
     const created = presets.map((c) => ({ id: c.id, name: c.name, modelIds: c.ids, enabled: true }));
     const next = [...created];
