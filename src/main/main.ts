@@ -118,8 +118,21 @@ const createWindow = async () => {
     if (process.env.START_MINIMIZED) {
       mainWindow.minimize();
     } else {
-      mainWindow.maximize();
-      mainWindow.show();
+      const isMac = process.platform === 'darwin';
+      if (isMac) {
+        try {
+          // macOS 使用“简单全屏”，覆盖 Dock 与菜单栏
+          mainWindow.setSimpleFullScreen(true);
+          mainWindow.show();
+        } catch {
+          // 兜底：若简单全屏不可用，切换系统全屏
+          try { mainWindow.setFullScreen(true); mainWindow.show(); } catch {}
+        }
+      } else {
+        // 非 macOS 保持最大化行为
+        mainWindow.maximize();
+        mainWindow.show();
+      }
     }
   });
 
