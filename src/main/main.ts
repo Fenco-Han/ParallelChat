@@ -193,7 +193,7 @@ const createWindow = async () => {
               { id: 'group-kdy', name: 'Kimi | Doubao | Yuanbao', ids: ['kimi','doubao','yuanbao'] },
               { id: 'group-ccg', name: 'ChatGPT | Claude | Grok', ids: ['chatgpt','claude','grok'] },
             ];
-            const created = presets.map((c) => ({ id: c.id, name: c.name, modelIds: c.ids }));
+            const created = presets.map((c) => ({ id: c.id, name: c.name, modelIds: c.ids, enabled: true }));
             if (created.length > 0) {
               const next = [...created];
               try { store.set('aiGroups', next as any); } catch {}
@@ -204,7 +204,8 @@ const createWindow = async () => {
                 ...existingOrder.filter((gid: string) => next.some((g) => g.id === gid)),
                 ...next.map((g) => g.id).filter((gid) => !existingOrder.includes(gid)),
               ];
-              try { store.set('layout', { ...layout, groupOrder: unionOrder } as any); } catch {}
+              const disabledGroups: string[] = Array.isArray(layout?.disabledGroups) ? (layout.disabledGroups as string[]) : [];
+              try { store.set('layout', { ...layout, groupOrder: unionOrder, disabledGroups } as any); } catch {}
               try { mainWindow?.webContents.send('parallelchat/groups/reload'); } catch {}
             }
           }
@@ -302,7 +303,7 @@ type StoreSchema = {
    * - name：分组名称
    * - modelIds：该分组包含的模型 id 列表
    */
-  aiGroups?: Array<{ id: string; name: string; modelIds: string[] }>;
+  aiGroups?: Array<{ id: string; name: string; modelIds: string[]; enabled?: boolean }>;
 
   /**
    * 工作区布局状态：模式与视图顺序
@@ -310,12 +311,14 @@ type StoreSchema = {
    * - order：标签模式下的视图顺序（元素为 AI id）
    * - groupOrder：分组模式下的分组顺序（元素为分组 id）
    * - activeGroupId：分组模式下的当前分组 id
+   * - disabledGroups：被停用的分组 id 列表（冗余存储，便于兼容）
    */
   layout?: {
     /** 布局模式：分组或标签页 */ mode: 'groups' | 'tabs';
     /** 标签模式：视图顺序，与 aiProviders 的 id 对齐 */ order?: string[];
     /** 分组模式：分组顺序 */ groupOrder?: string[];
     /** 分组模式：当前激活分组 */ activeGroupId?: string;
+    /** 分组模式：停用的分组 id 列表 */ disabledGroups?: string[];
   };
 
   /**
@@ -916,13 +919,15 @@ function createAiView(ai: AiProvider): WebContentsView {
 function syncAiViews() {
   const providers = (store.get('aiProviders') as AiProvider[] | undefined) ?? [];
   const layout = (store.get('layout') as StoreSchema['layout'] | undefined) ?? {};
-  const groups = (store.get('aiGroups') as Array<{ id: string; name?: string; modelIds: string[] }> | undefined) ?? [];
+  const groups = (store.get('aiGroups') as Array<{ id: string; name?: string; modelIds: string[]; enabled?: boolean }> | undefined) ?? [];
   const ids = new Set<string>(providers.map((p) => p.id));
   log.info(`[layout][syncAiViews][start] mode=${layout?.mode ?? 'tabs'} activeGroupId=${layout?.activeGroupId ?? ''} providers=${providers.map(p=>p.id).join(',')} existingViews=${Array.from(viewsRegistry.keys()).join(',')}`);
 
   // 在分组模式下，视图常驻：包含所有分组的模型并集
   if ((layout?.mode ?? 'tabs') === 'groups') {
-    const unionIds = Array.from(new Set(groups.flatMap((g) => Array.isArray(g.modelIds) ? g.modelIds : [])));
+    const disabledSet = new Set<string>(Array.isArray(layout?.disabledGroups) ? (layout!.disabledGroups as string[]) : []);
+    const enabledGroups = groups.filter((g) => (g.enabled !== false) && !disabledSet.has(g.id));
+    const unionIds = Array.from(new Set(enabledGroups.flatMap((g) => Array.isArray(g.modelIds) ? g.modelIds : [])));
     if (unionIds.length > 0) {
       log.info(`[layout][syncAiViews][groups] union=${unionIds.join(',')}`);
       for (const id of unionIds) ids.add(id);
@@ -1000,9 +1005,12 @@ function applyLayout() {
   }
 
   // groups：按活动分组的模型并排布局
-  const groups = (store.get('aiGroups') as Array<{ id: string; name: string; modelIds: string[] }> | undefined) ?? [];
-  const activeGroupId = layout?.activeGroupId ?? (layout?.groupOrder && layout.groupOrder[0]) ?? (groups[0]?.id);
-  const activeGroup = groups.find((g) => g.id === activeGroupId) ?? groups[0];
+  const groups = (store.get('aiGroups') as Array<{ id: string; name: string; modelIds: string[]; enabled?: boolean }> | undefined) ?? [];
+  const disabledSet = new Set<string>(Array.isArray(layout?.disabledGroups) ? (layout!.disabledGroups as string[]) : []);
+  const enabledGroups = groups.filter((g) => (g.enabled !== false) && !disabledSet.has(g.id));
+  const fallbackId = (layout?.groupOrder && layout.groupOrder.find((gid) => enabledGroups.some((x) => x.id === gid))) || (enabledGroups[0]?.id);
+  const activeGroupId = (layout?.activeGroupId && enabledGroups.some((g) => g.id === layout!.activeGroupId)) ? layout!.activeGroupId : fallbackId;
+  const activeGroup = enabledGroups.find((g) => g.id === activeGroupId) ?? enabledGroups[0];
   if (!activeGroup || !Array.isArray(activeGroup.modelIds) || activeGroup.modelIds.length === 0) return;
   const visibleModelIds = activeGroup.modelIds.filter((id) => viewsRegistry.has(id));
   log.info(`[layout][applyLayout][groups] activeGroupId=${activeGroupId} visible=${visibleModelIds.join(',')} count=${visibleModelIds.length}`);
@@ -1050,8 +1058,10 @@ ipcMain.on('parallelchat/layout/active', (_e, id: string) => {
 
 // 设置分组模式的激活分组：更新 activeGroupId 并应用布局
 ipcMain.on('parallelchat/layout/group/active', (_e, groupId: string) => {
-  const groups = ((store.get('aiGroups') as Array<{ id: string }> | undefined) ?? []) as Array<{ id: string }>;
-  const idSet = new Set(groups.map((g) => g.id));
+  const layout = (store.get('layout') as StoreSchema['layout'] | undefined) ?? {};
+  const disabledSet = new Set<string>(Array.isArray(layout?.disabledGroups) ? (layout!.disabledGroups as string[]) : []);
+  const groups = ((store.get('aiGroups') as Array<{ id: string; enabled?: boolean }> | undefined) ?? []) as Array<{ id: string; enabled?: boolean }>;
+  const idSet = new Set(groups.filter((g) => (g.enabled !== false) && !disabledSet.has(g.id)).map((g) => g.id));
   if (!idSet.has(groupId)) return;
   const current = (store.get('layout') as StoreSchema['layout'] | undefined) ?? { mode: 'groups', groupOrder: groups.map((g) => g.id) };
   store.set('layout', { ...current, activeGroupId: groupId });

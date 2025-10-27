@@ -7,7 +7,7 @@ import { PROVIDER_CATALOG } from '../../shared/providers';
 import PromptModal from './PromptModal';
 
 type AiProvider = { id: string; name: string; url: string; handler?: string };
-type AiGroup = { id: string; name: string; modelIds: string[] };
+type AiGroup = { id: string; name: string; modelIds: string[]; enabled?: boolean };
 
 export default function GlobalInputBar({
   layoutMode,
@@ -91,8 +91,8 @@ export default function GlobalInputBar({
   const availableProviders = useMemo(() => {
     const toProvider = (id: string) => providers.find((p) => p.id === id) || PROVIDER_CATALOG.find((p) => p.id === id);
     if (layoutMode === 'groups') {
-      // 显示所有分组的并集（不再根据 loadedSet 过滤显示）。
-      const unionIds = Array.from(new Set(groups.flatMap((g) => g.modelIds)));
+      // 仅显示启用分组的并集（不再根据 loadedSet 过滤显示）。
+      const unionIds = Array.from(new Set(groups.filter((g) => g.enabled !== false).flatMap((g) => g.modelIds)));
       return unionIds.map(toProvider).filter((p): p is AiProvider => !!p);
     }
     return providers.filter((p) => loadedSet.has(p.id));

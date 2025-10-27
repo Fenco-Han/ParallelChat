@@ -100,7 +100,7 @@ export default function SettingsModal({
     setClearingOne((prev) => ({ ...prev, [id]: false }));
   };
 
-  type AiGroup = { id: string; name: string; modelIds: string[] };
+  type AiGroup = { id: string; name: string; modelIds: string[]; enabled?: boolean };
   const [groups, setGroups] = useState<AiGroup[]>([]);
   const [creating, setCreating] = useState(false);
   const [newGroupName, setNewGroupName] = useState('');
@@ -135,7 +135,8 @@ export default function SettingsModal({
 
       try {
         const g = (await window.parallelchat?.invoke('parallelchat/store/get', 'aiGroups')) as AiGroup[] | undefined;
-        setGroups(g ?? []);
+        const list = (g ?? []).map((x) => ({ ...x, enabled: x.enabled !== false }));
+        setGroups(list);
       } catch {
         setGroups([]);
       }
@@ -185,10 +186,17 @@ export default function SettingsModal({
       toast.error(t('settings.groups.nameRequired'));
       return;
     }
-    const id = `group-${Date.now()}-${Math.floor(Math.random()*10000)}`;
-    const next: AiGroup[] = [...groups, { id, name, modelIds: Array.from(newGroupModels) }];
+    const id = `group-${Date.now()}-${Math.floor(Math.random() * 10000)}`;
+    const next: AiGroup[] = [...groups, { id, name, modelIds: Array.from(newGroupModels), enabled: true }];
     try {
       await window.parallelchat?.invoke('parallelchat/store/set', 'aiGroups', next);
+      // 同步 layout.disabledGroups：确保新分组默认启用
+      try {
+        const layout = (await window.parallelchat?.invoke('parallelchat/store/get', 'layout')) as any;
+        const disabled = Array.isArray(layout?.disabledGroups) ? layout.disabledGroups : [];
+        const nextLayout = { ...layout, disabledGroups: disabled.filter((gid: string) => gid !== id) };
+        await window.parallelchat?.invoke('parallelchat/store/set', 'layout', nextLayout);
+      } catch {}
       window.parallelchat?.send('parallelchat/groups/reload');
       setGroups(next);
       toast.success(t('settings.groups.saved'));
@@ -239,6 +247,12 @@ export default function SettingsModal({
     const next = groups.filter((g) => g.id !== id);
     try {
       await window.parallelchat?.invoke('parallelchat/store/set', 'aiGroups', next);
+      try {
+        const layout = (await window.parallelchat?.invoke('parallelchat/store/get', 'layout')) as any;
+        const disabled = Array.isArray(layout?.disabledGroups) ? layout.disabledGroups : [];
+        const nextLayout = { ...layout, disabledGroups: disabled.filter((gid: string) => gid !== id) };
+        await window.parallelchat?.invoke('parallelchat/store/set', 'layout', nextLayout);
+      } catch {}
       window.parallelchat?.send('parallelchat/groups/reload');
       setGroups(next);
       toast.success(t('settings.groups.deleted'));
@@ -260,14 +274,14 @@ export default function SettingsModal({
       { id: 'group-kdy', name: 'Kimi | Doubao | Yuanbao', ids: ['kimi','doubao','yuanbao'] },
       { id: 'group-ccg', name: 'ChatGPT | Claude | Grok', ids: ['chatgpt','claude','grok'] },
     ];
-    const created = presets.map((c) => ({ id: c.id, name: c.name, modelIds: c.ids }));
+    const created = presets.map((c) => ({ id: c.id, name: c.name, modelIds: c.ids, enabled: true }));
     const next = [...created];
     try {
       await window.parallelchat?.invoke('parallelchat/store/set', 'aiGroups', next);
       // 覆盖 groupOrder 为预设分组顺序
       const layout = (await window.parallelchat?.invoke('parallelchat/store/get', 'layout')) as any;
       const order = next.map((g) => g.id);
-      await window.parallelchat?.invoke('parallelchat/store/set', 'layout', { ...layout, groupOrder: order });
+      await window.parallelchat?.invoke('parallelchat/store/set', 'layout', { ...layout, groupOrder: order, disabledGroups: [] });
       window.parallelchat?.send('parallelchat/groups/reload');
       setGroups(next);
       toast.success(t('settings.groups.saved'));
@@ -391,9 +405,9 @@ export default function SettingsModal({
 
               <div className="space-y-2">
                 {groups.map((g) => (
-                  <Card key={g.id}>
+                  <Card key={g.id} className={g.enabled === false ? 'opacity-60' : ''}>
                     <CardContent className="px-4 py-3">
-                      {editingId === g.id ? (
+                    {editingId === g.id ? (
                         <div className="space-y-3">
                           <div>
                             <div className="text-sm mb-1">{t('settings.groups.name')}</div>
@@ -431,14 +445,35 @@ export default function SettingsModal({
                             <div className="text-xs text-muted-foreground">{t('settings.groups.count', { count: g.modelIds.length })}</div>
                           </div>
                           <div className="flex items-center gap-2">
+                            <div className="flex items-center gap-2">
+                              <span className="text-sm text-muted-foreground">{t('settings.enable')}</span>
+                              <Switch
+                                checked={g.enabled !== false}
+                                onCheckedChange={async (checked) => {
+                                  const next = groups.map((x) => x.id === g.id ? { ...x, enabled: !!checked } : x);
+                                  try {
+                                    await window.parallelchat?.invoke('parallelchat/store/set', 'aiGroups', next);
+                                    // 同步 layout.disabledGroups
+                                    try {
+                                      const layout = (await window.parallelchat?.invoke('parallelchat/store/get', 'layout')) as any;
+                                      const disabled = Array.isArray(layout?.disabledGroups) ? layout.disabledGroups : [];
+                                      const nextDisabled = checked ? disabled.filter((gid: string) => gid !== g.id) : Array.from(new Set([...disabled, g.id]));
+                                      await window.parallelchat?.invoke('parallelchat/store/set', 'layout', { ...layout, disabledGroups: nextDisabled });
+                                    } catch {}
+                                    window.parallelchat?.send('parallelchat/groups/reload');
+                                    setGroups(next);
+                                  } catch {}
+                                }}
+                              />
+                            </div>
                             <Button size="sm" variant="secondary" onClick={() => startEdit(g)}>{t('actions.edit')}</Button>
                             <Button size="sm" variant="destructive" onClick={() => deleteGroup(g.id)}>{t('actions.delete')}</Button>
                           </div>
                         </div>
                       )}
-                    </CardContent>
-                  </Card>
-                ))}
+                  </CardContent>
+                </Card>
+              ))}
               </div>
             </div>
           </TabsContent>

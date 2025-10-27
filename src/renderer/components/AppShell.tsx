@@ -22,7 +22,7 @@ export default function AppShell() {
     { id: string; x: number; y: number; name?: string; type: 'provider' | 'group' }
     | null
   >(null);
-  const [groups, setGroups] = useState<Array<{ id: string; name: string; modelIds: string[] }>>([]);
+  const [groups, setGroups] = useState<Array<{ id: string; name: string; modelIds: string[]; enabled?: boolean }>>([]);
   const [activeGroupId, setActiveGroupId] = useState<string | undefined>(undefined);
   const [groupOrder, setGroupOrder] = useState<string[]>([]);
 
@@ -66,7 +66,7 @@ export default function AppShell() {
         setGroups(groupsData);
 
         const layout = (await window.parallelchat?.invoke('parallelchat/store/get', 'layout')) as
-          | { mode?: 'groups' | 'tabs'; order?: string[]; groupOrder?: string[]; activeGroupId?: string }
+          | { mode?: 'groups' | 'tabs'; order?: string[]; groupOrder?: string[]; activeGroupId?: string; disabledGroups?: string[] }
           | undefined;
         const mode = layout?.mode ?? 'tabs';
         setLayoutMode(mode as 'groups' | 'tabs');
@@ -74,9 +74,17 @@ export default function AppShell() {
         const order = layout?.order && layout.order.length > 0 ? layout.order : aiList.map((p) => p.id);
         setActiveId(order[0]);
 
-        const gOrder = (layout?.groupOrder && layout.groupOrder.length > 0) ? layout.groupOrder : groupsData.map((g) => g.id);
+        const disabledSet = new Set<string>(Array.isArray(layout?.disabledGroups) ? layout!.disabledGroups! : []);
+        const enabledGroups = groupsData.filter((g) => (g.enabled !== false) && !disabledSet.has(g.id));
+        const gOrder = (layout?.groupOrder && layout.groupOrder.length > 0)
+          ? layout!.groupOrder!.filter((gid) => enabledGroups.some((x) => x.id === gid))
+          : enabledGroups.map((g) => g.id);
         setGroupOrder(gOrder);
-        const agid = layout?.activeGroupId ?? gOrder[0];
+        const agid = (() => {
+          const wanted = layout?.activeGroupId;
+          if (wanted && enabledGroups.some((g) => g.id === wanted)) return wanted;
+          return gOrder[0];
+        })();
         setActiveGroupId(agid);
       } catch {}
     };
@@ -240,8 +248,9 @@ export default function AppShell() {
 
   // 计算分组标签的完整顺序：优先使用 layout.groupOrder，并补全缺失分组
   const orderedGroupIds = (() => {
-    const fromOrder = (groupOrder || []).filter((gid) => groups.some((x) => x.id === gid));
-    const rest = groups.filter((g) => !fromOrder.includes(g.id)).map((g) => g.id);
+    const visibleSet = new Set(groups.filter((g) => g.enabled !== false).map((g) => g.id));
+    const fromOrder = (groupOrder || []).filter((gid) => visibleSet.has(gid));
+    const rest = groups.filter((g) => !fromOrder.includes(g.id) && visibleSet.has(g.id)).map((g) => g.id);
     return [...fromOrder, ...rest];
   })();
   const currentGroupTabValue = (() => {
@@ -279,7 +288,7 @@ export default function AppShell() {
               <Tabs value={currentGroupTabValue} onValueChange={activateGroup} className="flex-1">
                 <TabsList>
                   {orderedGroupIds.map((gid) => {
-                    const g = groups.find((x) => x.id === gid);
+                    const g = groups.find((x) => x.id === gid && (x.enabled !== false));
                     if (!g) return null;
                     return (
                       <TabsTrigger
