@@ -89,8 +89,8 @@ const createWindow = async () => {
 
   mainWindow = new BrowserWindow({
     show: false,
-    width: 1024,
-    height: 728,
+    width: 1600,
+    height: 900,
     autoHideMenuBar: true,
     icon: getAssetPath('icon.png'),
     webPreferences: {
@@ -118,21 +118,7 @@ const createWindow = async () => {
     if (process.env.START_MINIMIZED) {
       mainWindow.minimize();
     } else {
-      const isMac = process.platform === 'darwin';
-      if (isMac) {
-        try {
-          // macOS 使用“简单全屏”，覆盖 Dock 与菜单栏
-          mainWindow.setSimpleFullScreen(true);
-          mainWindow.show();
-        } catch {
-          // 兜底：若简单全屏不可用，切换系统全屏
-          try { mainWindow.setFullScreen(true); mainWindow.show(); } catch {}
-        }
-      } else {
-        // 非 macOS 保持最大化行为
-        mainWindow.maximize();
-        mainWindow.show();
-      }
+      mainWindow.show();
     }
   });
 
@@ -203,9 +189,9 @@ const createWindow = async () => {
           if (!Array.isArray(existingGroups) || existingGroups.length === 0) {
             const providers = getProviders();
             const presets = [
-              { id: 'group-dqg', name: 'DeepSeek · Qwen · GLM', ids: ['deepseek','qwen','glm'] },
-              { id: 'group-kdy', name: 'Kimi · Doubao · Yuanbao', ids: ['kimi','doubao','yuanbao'] },
-              { id: 'group-ccg', name: 'ChatGPT · Claude · Grok', ids: ['chatgpt','claude','grok'] },
+              { id: 'group-dqg', name: 'DeepSeek | Qwen | GLM', ids: ['deepseek','qwen','glm'] },
+              { id: 'group-kdy', name: 'Kimi | Doubao | Yuanbao', ids: ['kimi','doubao','yuanbao'] },
+              { id: 'group-ccg', name: 'ChatGPT | Claude | Grok', ids: ['chatgpt','claude','grok'] },
             ];
             const created = presets.map((c) => ({ id: c.id, name: c.name, modelIds: c.ids }));
             if (created.length > 0) {
@@ -965,7 +951,7 @@ function syncAiViews() {
 
   applyLayout();
   log.info(`[layout][syncAiViews][end] views=${Array.from(viewsRegistry.keys()).join(',')}`);
-  
+
   // 通知渲染进程更新可用模型列表
   const currentIds = Array.from(viewsRegistry.keys());
   mainWindow?.webContents.send('parallelchat/ai/ready', { ids: currentIds });
