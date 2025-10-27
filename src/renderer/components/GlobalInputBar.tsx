@@ -395,44 +395,62 @@ export default function GlobalInputBar({
     if (others.length) await addFiles(others, 'file');
   };
 
-  // 粘贴图片上传：检测剪贴板中的图片并保存为临时文件
+  // 粘贴文件/图片上传：检测剪贴板中的文件并保存为临时文件（支持 image 与其他类型，如 .md/.pdf）
   const handlePaste = async (e: React.ClipboardEvent<HTMLTextAreaElement>) => {
     const items = Array.from(e.clipboardData?.items ?? []);
-    const imageItems = items.filter((i) => i.type && i.type.startsWith('image/'));
-    if (imageItems.length === 0) return;
+    const fileItems = items.filter((i) => i.kind === 'file');
+    if (fileItems.length === 0) return;
     e.preventDefault();
 
-    const paths: string[] = [];
-    for (const item of imageItems) {
+    const imagePaths: string[] = [];
+    const otherPaths: string[] = [];
+
+    for (const item of fileItems) {
       const file = item.getAsFile();
       if (!file) continue;
       try {
         const buf = await file.arrayBuffer();
-        const ext = (() => {
-          const mime = (file.type || '').toLowerCase();
-          if (mime.includes('png')) return '.png';
-          if (mime.includes('jpeg') || mime.includes('jpg')) return '.jpg';
-          if (mime.includes('webp')) return '.webp';
-          if (mime.includes('gif')) return '.gif';
-          if (mime.includes('bmp')) return '.bmp';
-          if (mime.includes('svg')) return '.svg';
-          if (mime.includes('heic')) return '.heic';
-          return '.png';
-        })();
-        const baseName =
-          file.name && file.name.trim().length > 0
-            ? file.name
-            : `pasted-${Date.now()}${ext}`;
+        // 优先使用文件名的扩展名；若没有则根据 MIME 推断
+        const nameFromClipboard = (file.name || '').trim();
+        const inferExtFromMime = (mime: string) => {
+          const m = mime.toLowerCase();
+          if (m.includes('png')) return '.png';
+          if (m.includes('jpeg') || m.includes('jpg')) return '.jpg';
+          if (m.includes('webp')) return '.webp';
+          if (m.includes('gif')) return '.gif';
+          if (m.includes('bmp')) return '.bmp';
+          if (m.includes('svg')) return '.svg';
+          if (m.includes('heic')) return '.heic';
+          if (m.includes('pdf')) return '.pdf';
+          if (m.includes('markdown')) return '.md';
+          if (m.includes('plain')) return '.txt';
+          if (m.includes('application/msword')) return '.doc';
+          if (m.includes('application/vnd.openxmlformats-officedocument.wordprocessingml.document')) return '.docx';
+          if (m.includes('application/vnd.ms-excel')) return '.xls';
+          if (m.includes('application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')) return '.xlsx';
+          if (m.includes('application/vnd.ms-powerpoint')) return '.ppt';
+          if (m.includes('application/vnd.openxmlformats-officedocument.presentationml.presentation')) return '.pptx';
+          return '.bin';
+        };
+        let ext = '.bin';
+        const dot = nameFromClipboard.lastIndexOf('.');
+        if (dot >= 0) {
+          ext = nameFromClipboard.slice(dot).toLowerCase();
+        } else {
+          ext = inferExtFromMime(file.type || '');
+        }
+        const baseName = nameFromClipboard.length > 0 ? nameFromClipboard : `pasted-${Date.now()}${ext}`;
         const res = (await window.parallelchat?.invoke('parallelchat/file/save-temp', { name: baseName, buffer: buf })) as any;
         if (res?.ok && typeof res?.filePath === 'string') {
-          paths.push(res.filePath);
+          const isImage = (file.type || '').toLowerCase().startsWith('image/') || ['.png', '.jpg', '.jpeg', '.gif', '.webp', '.bmp', '.svg', '.heic'].includes(ext);
+          if (isImage) imagePaths.push(res.filePath);
+          else otherPaths.push(res.filePath);
         }
       } catch {}
     }
 
-    if (paths.length) {
-      await addFiles(paths, 'image');
-    }
+    if (imagePaths.length) await addFiles(imagePaths, 'image');
+    if (otherPaths.length) await addFiles(otherPaths, 'file');
   };
 
   return (
