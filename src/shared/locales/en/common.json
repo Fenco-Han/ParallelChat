@@ -54,7 +54,7 @@
     "welcome": "Welcome to ParallelChat"
   },
   "sidebar": {
-    "history": "History",
+    "history": "His",
     "newSession": "New Session",
     "noSessions": "No sessions yet",
     "noSessionsTip": "A session is created automatically after you start chatting",

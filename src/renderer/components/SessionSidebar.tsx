@@ -283,7 +283,7 @@ export default function SessionSidebar() {
   return (
     <>
       <style>{scrollbarStyles}</style>
-      <aside className="w-56 shrink-0 bg-gradient-subtle backdrop-blur-md flex flex-col border-r border-border/50 shadow-sm">
+      <aside className="w-48 shrink-0 bg-gradient-subtle backdrop-blur-md flex flex-col border-r border-border/50 shadow-sm">
       {/* 头部（移回顶部） */}
       <div className="px-4 py-3 bg-card/95 backdrop-blur-md flex items-center border-b border-border/50 shadow-sm">
         <div className="flex items-center justify-between w-full">
