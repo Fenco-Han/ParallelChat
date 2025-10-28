@@ -282,10 +282,10 @@ export default function AppShell() {
     <div className="h-screen w-screen flex flex-col overflow-hidden bg-background text-foreground">
       {/* 顶部全宽标题栏 */}
       <div
-        className={`pc-titlebar flex items-center justify-between ${isMac ? 'pl-20 pr-4 py-2' : 'px-4 py-2'} bg-gradient-card backdrop-blur-md shadow-md border-b border-border/50`}
+        className={`pc-titlebar flex items-center justify-between px-4 py-2 bg-gradient-card backdrop-blur-md shadow-md border-b border-border/50`}
         onDoubleClick={() => window.parallelchat?.send('parallelchat/window/toggle-maximize')}
       >
-        <div className="flex items-center gap-2 flex-1">
+        <div className={`flex items-center gap-2 flex-1 ${isMac ? 'ml-56' : ''}`}>
           {/* macOS 下不显示自绘窗口按钮，保留系统原生 */}
           {layoutMode === 'tabs' && providers.length > 0 && (
             <Tabs value={activeId} onValueChange={activateTab} className="flex-1">

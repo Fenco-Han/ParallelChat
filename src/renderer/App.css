@@ -52,6 +52,53 @@
   --shadow-xl: 0 20px 25px -5px rgba(0, 0, 0, 0.08), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
 }
 
+/* —— Dark Theme (warm) —— */
+.dark {
+  /* Base */
+  --background: 30 15% 10%;
+  --foreground: 40 35% 96%;
+
+  /* Accents */
+  --primary: 30 55% 55%;
+  --primary-foreground: 0 0% 8%;
+
+  --secondary: 30 15% 18%;
+  --secondary-foreground: 40 35% 92%;
+
+  --accent: 25 60% 58%;
+  --accent-foreground: 40 35% 96%;
+
+  /* Muted */
+  --muted: 30 12% 16%;
+  --muted-foreground: 40 15% 72%;
+
+  /* Borders and inputs */
+  --border: 30 10% 22%;
+  --input: 30 10% 22%;
+  --ring: 30 55% 55%;
+
+  /* Popovers and cards */
+  --popover: 30 15% 12%;
+  --popover-foreground: 40 35% 96%;
+  --card: 30 12% 12%;
+  --card-foreground: 40 35% 96%;
+
+  /* Destructive */
+  --destructive: 0 70% 52%;
+  --destructive-foreground: 40 35% 98%;
+
+  /* Gradients */
+  --gradient-primary: linear-gradient(135deg, hsl(30 45% 50%) 0%, hsl(25 60% 58%) 100%);
+  --gradient-card: linear-gradient(145deg, hsl(30 12% 14%) 0%, hsl(30 12% 12%) 100%);
+  --gradient-subtle: linear-gradient(180deg, hsl(30 12% 13%) 0%, hsl(30 12% 11%) 100%);
+
+  /* Shadows (keep subtle) */
+  --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.35);
+  --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.45), 0 2px 4px -1px rgba(0, 0, 0, 0.35);
+  --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.50), 0 4px 6px -2px rgba(0, 0, 0, 0.40);
+  --shadow-xl: 0 20px 25px -5px rgba(0, 0, 0, 0.55), 0 10px 10px -5px rgba(0, 0, 0, 0.45);
+}
+
 /* —— Tabs 运行中动效：方案A 旋转渐变边框 —— */
 @property --pc-angle { syntax: '<angle>'; initial-value: 0deg; inherits: false; }
 @keyframes pc-spin { to { --pc-angle: 360deg; } }
@@ -62,6 +109,13 @@
   --pc-ring1: hsl(30 60% 70%); /* Light golden */
   --pc-ring2: hsl(30 50% 60%); /* Medium golden */
   --pc-ring3: hsl(25 55% 55%); /* Rich golden brown */
+}
+
+.dark {
+  /* Tab animation colors for dark theme */
+  --pc-ring1: hsl(30 65% 65%);
+  --pc-ring2: hsl(30 55% 55%);
+  --pc-ring3: hsl(25 65% 50%);
 }
 
 .pc-tab { position: relative; }

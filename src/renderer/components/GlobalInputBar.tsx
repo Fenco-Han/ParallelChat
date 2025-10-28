@@ -32,6 +32,29 @@ export default function GlobalInputBar({
   const [isDragging, setIsDragging] = useState(false);
   const [promptOpen, setPromptOpen] = useState(false);
 
+  // 主题状态：暗黑/明亮
+  const THEME_STORAGE_KEY = 'parallelchat-theme';
+  const [isDark, setIsDark] = useState(false);
+
+  const applyThemeClass = (dark: boolean) => {
+    try {
+      const el = document.documentElement;
+      if (!el) return;
+      if (dark) el.classList.add('dark');
+      else el.classList.remove('dark');
+    } catch {}
+  };
+
+  useEffect(() => {
+    // 初始化主题：优先读取本地存储，否则默认明亮
+    try {
+      const stored = localStorage.getItem(THEME_STORAGE_KEY);
+      const dark = stored === 'dark';
+      setIsDark(dark);
+      applyThemeClass(dark);
+    } catch {}
+  }, []);
+
   type Attachment = { id: string; filePath: string; mime: string; name: string; dataUrl?: string; kind: 'image' | 'file' };
   const [attachments, setAttachments] = useState<Attachment[]>([]);
 
@@ -298,6 +321,28 @@ export default function GlobalInputBar({
     </svg>
   );
 
+  const SunIcon = () => (
+    <svg width="18" height="18" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+      <circle cx="12" cy="12" r="4" stroke="currentColor" strokeWidth="2" fill="none" />
+      <path d="M12 2v2M12 20v2M2 12h2M20 12h2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
+    </svg>
+  );
+
+  const MoonIcon = () => (
+    <svg width="18" height="18" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+      <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z" stroke="currentColor" strokeWidth="2" fill="none" strokeLinecap="round" strokeLinejoin="round" />
+    </svg>
+  );
+
+  const toggleTheme = () => {
+    setIsDark((prev) => {
+      const next = !prev;
+      applyThemeClass(next);
+      try { localStorage.setItem(THEME_STORAGE_KEY, next ? 'dark' : 'light'); } catch {}
+      return next;
+    });
+  };
+
   // 移动到组件内部的附件相关函数
   const removeAttachment = (id: string) => {
     setAttachments((prev) => prev.filter(a => a.id !== id));
@@ -544,6 +589,17 @@ export default function GlobalInputBar({
 
           {/* 右侧发送与折叠 */}
           <div className="flex items-center gap-2">
+            {/* 主题切换按钮（在提示词按钮左侧） */}
+            <button
+              type="button"
+              onClick={toggleTheme}
+              className="h-9 w-9 rounded-lg bg-muted/80 hover:bg-muted text-foreground flex items-center justify-center shadow-sm hover:shadow-md transition-all duration-200 hover:scale-110"
+              aria-label={isDark ? '切换为日间模式' : '切换为暗黑模式'}
+              title={isDark ? '日间模式' : '暗黑模式'}
+            >
+              {isDark ? <SunIcon /> : <MoonIcon />}
+            </button>
+
             {/* 提示词按钮（在折叠按钮左侧） */}
             <button
               type="button"
