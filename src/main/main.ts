@@ -93,6 +93,9 @@ const createWindow = async () => {
     height: 900,
     autoHideMenuBar: true,
     icon: getAssetPath('icon.png'),
+    // 无边框窗口，使用自定义标题栏与控制按钮
+    frame: false,
+    titleBarStyle: process.platform === 'darwin' ? 'hidden' : undefined,
     webPreferences: {
       preload: app.isPackaged
         ? path.join(__dirname, 'preload.js')
@@ -126,6 +129,28 @@ const createWindow = async () => {
     mainWindow = null;
   });
 
+  // —— 自定义标题栏：窗口状态事件，通知渲染器更新按钮状态 ——
+  try {
+    mainWindow.on('maximize', () => {
+      try { mainWindow?.webContents.send('parallelchat/window/state', { maximized: true }); } catch {}
+    });
+    mainWindow.on('unmaximize', () => {
+      try { mainWindow?.webContents.send('parallelchat/window/state', { maximized: false }); } catch {}
+    });
+    mainWindow.on('enter-full-screen', () => {
+      try { mainWindow?.webContents.send('parallelchat/window/state', { fullscreen: true }); } catch {}
+    });
+    mainWindow.on('leave-full-screen', () => {
+      try { mainWindow?.webContents.send('parallelchat/window/state', { fullscreen: false }); } catch {}
+    });
+    mainWindow.on('focus', () => {
+      try { mainWindow?.webContents.send('parallelchat/window/state', { focused: true }); } catch {}
+    });
+    mainWindow.on('blur', () => {
+      try { mainWindow?.webContents.send('parallelchat/window/state', { focused: false }); } catch {}
+    });
+  } catch {}
+
   // const menuBuilder = new MenuBuilder(mainWindow);
   // menuBuilder.buildMenu();
 
@@ -154,6 +179,39 @@ const createWindow = async () => {
   // Remove this if your app does not use auto updates
   // eslint-disable-next-line
   new AppUpdater();
+
+  // —— 自定义标题栏：IPC 窗口控制 ——
+  ipcMain.on('parallelchat/window/minimize', () => {
+    try { mainWindow?.minimize(); } catch {}
+  });
+  ipcMain.on('parallelchat/window/maximize', () => {
+    try {
+      if (!mainWindow) return;
+      if (!mainWindow.isMaximized()) mainWindow.maximize();
+    } catch {}
+  });
+  ipcMain.on('parallelchat/window/unmaximize', () => {
+    try {
+      if (!mainWindow) return;
+      if (mainWindow.isMaximized()) mainWindow.unmaximize();
+    } catch {}
+  });
+  ipcMain.on('parallelchat/window/toggle-maximize', () => {
+    try {
+      if (!mainWindow) return;
+      if (mainWindow.isMaximized()) mainWindow.unmaximize();
+      else mainWindow.maximize();
+    } catch {}
+  });
+  ipcMain.on('parallelchat/window/close', () => {
+    try { mainWindow?.close(); } catch {}
+  });
+  ipcMain.on('parallelchat/window/fullscreen/toggle', () => {
+    try {
+      if (!mainWindow) return;
+      mainWindow.setFullScreen(!mainWindow.isFullScreen());
+    } catch {}
+  });
 
   // 在主窗口页面加载完成后，同步并创建已配置的 AI 视图
   mainWindow.webContents.on('did-finish-load', () => {

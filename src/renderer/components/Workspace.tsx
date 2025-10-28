@@ -48,28 +48,31 @@ export default function Workspace() {
   }, []);
 
   return (
-    <div ref={ref} className="flex-1 relative">
+    <div ref={ref} className="flex-1 relative bg-gradient-subtle">
       <Empty className="h-full">
         <EmptyHeader>
-          <EmptyMedia variant="icon">
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              width="24"
-              height="24"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="2"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-            >
-              <rect width="18" height="18" x="3" y="3" rx="2" ry="2"/>
-              <line x1="9" x2="15" y1="9" y2="15"/>
-              <line x1="15" x2="9" y1="9" y2="15"/>
-            </svg>
+          <EmptyMedia variant="icon" className="text-primary">
+            <div className="p-6 rounded-3xl bg-gradient-primary/10 backdrop-blur-sm shadow-lg">
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                width="48"
+                height="48"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                className="text-primary"
+              >
+                <rect width="18" height="18" x="3" y="3" rx="2" ry="2"/>
+                <line x1="9" x2="15" y1="9" y2="15"/>
+                <line x1="15" x2="9" y1="9" y2="15"/>
+              </svg>
+            </div>
           </EmptyMedia>
-          <EmptyTitle>{t('workspace.emptyTitle')}</EmptyTitle>
-          <EmptyDescription>
+          <EmptyTitle className="text-foreground font-bold text-xl mt-6">{t('workspace.emptyTitle')}</EmptyTitle>
+          <EmptyDescription className="text-muted-foreground font-medium text-base max-w-md mt-3">
             {t('workspace.emptyDesc', { app: t('app.title') })}
           </EmptyDescription>
         </EmptyHeader>

@@ -6,7 +6,7 @@ import SessionSidebar from './SessionSidebar';
 import { Button } from './ui/button';
 import { Tabs, TabsList, TabsTrigger } from './ui/tabs';
 import { Toaster } from './ui/sonner';
-import { LayoutGridIcon, NotebookTabsIcon } from 'lucide-react';
+import { LayoutGridIcon, NotebookTabsIcon, Minus, Square, X } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 
 export default function AppShell() {
@@ -25,6 +25,9 @@ export default function AppShell() {
   const [groups, setGroups] = useState<Array<{ id: string; name: string; modelIds: string[]; enabled?: boolean }>>([]);
   const [activeGroupId, setActiveGroupId] = useState<string | undefined>(undefined);
   const [groupOrder, setGroupOrder] = useState<string[]>([]);
+  const [isMaximized, setIsMaximized] = useState(false);
+  const [isFullscreen, setIsFullscreen] = useState(false);
+  const isMac = /Macintosh|Mac OS X/i.test(navigator.userAgent);
 
   // 初始化与订阅语言变化
   useEffect(() => {
@@ -174,6 +177,23 @@ export default function AppShell() {
     };
   }, [providers]);
 
+  // 订阅窗口状态变化，用于更新最大化与全屏按钮 UI
+  useEffect(() => {
+    const off = window.parallelchat?.on('parallelchat/window/state', (payload: any) => {
+      if (typeof payload?.maximized === 'boolean') setIsMaximized(!!payload.maximized);
+      if (typeof payload?.fullscreen === 'boolean') setIsFullscreen(!!payload.fullscreen);
+    });
+    return () => { off && off(); };
+  }, []);
+
+  // 为 CSS 添加平台标记（macOS 左侧按钮排列）
+  useEffect(() => {
+    try {
+      if (isMac) document.body.classList.add('is-mac');
+      else document.body.classList.remove('is-mac');
+    } catch {}
+  }, [isMac]);
+
   const toggleLayoutTop = () => {
     const next: 'groups' | 'tabs' = layoutMode === 'groups' ? 'tabs' : 'groups';
     setLayoutMode(next);
@@ -259,12 +279,43 @@ export default function AppShell() {
   })();
 
   return (
-    <div className="h-screen w-screen flex overflow-hidden bg-slate-50 text-foreground">
+    <div className="h-screen w-screen flex overflow-hidden bg-background text-foreground">
       <SessionSidebar />
 
-      <main className="flex-1 flex flex-col min-w-0 bg-white shadow-sm">
-        <div className="flex items-center justify-between px-3 py-2 bg-white/95 backdrop-blur-sm shadow-sm border-b border-slate-100">
+      <main className="flex-1 flex flex-col min-w-0 bg-card shadow-lg">
+        <div
+          className="pc-titlebar flex items-center justify-between px-4 py-3 bg-gradient-card backdrop-blur-md shadow-md border-b border-border/50"
+          onDoubleClick={() => window.parallelchat?.send('parallelchat/window/toggle-maximize')}
+        >
           <div className="flex items-center gap-2 flex-1">
+            {isMac && (
+              <div className="pc-window-controls mr-2 flex items-center gap-1">
+                <button
+                  className="pc-no-drag pc-win-btn pc-win-min"
+                  aria-label={t('window.minimize')}
+                  title={t('window.minimize')}
+                  onClick={() => window.parallelchat?.send('parallelchat/window/minimize')}
+                >
+                  <Minus className="size-4" aria-hidden />
+                </button>
+                <button
+                  className="pc-no-drag pc-win-btn pc-win-max"
+                  aria-label={isMaximized ? t('window.restore') : t('window.maximize')}
+                  title={isMaximized ? t('window.restore') : t('window.maximize')}
+                  onClick={() => window.parallelchat?.send('parallelchat/window/toggle-maximize')}
+                >
+                  <Square className="size-4" aria-hidden />
+                </button>
+                <button
+                  className="pc-no-drag pc-win-btn pc-win-close"
+                  aria-label={t('window.close')}
+                  title={t('window.close')}
+                  onClick={() => window.parallelchat?.send('parallelchat/window/close')}
+                >
+                  <X className="size-4" aria-hidden />
+                </button>
+              </div>
+            )}
             {layoutMode === 'tabs' && providers.length > 0 && (
               <Tabs value={activeId} onValueChange={activateTab} className="flex-1">
                 <TabsList>
@@ -321,10 +372,10 @@ export default function AppShell() {
             </Tabs>
 
             <Button
-              variant="outline"
+              variant="default"
               size="sm"
               onClick={() => setSettingsOpen(true)}
-              className="h-8 px-3 text-xs font-medium bg-blue-50 border-blue-200 text-blue-700 hover:bg-blue-100 hover:border-blue-300"
+              className="h-9 px-4 text-xs font-semibold bg-gradient-primary text-primary-foreground hover:opacity-90 border-0 shadow-md hover:shadow-lg transition-all duration-200"
             >
               {t('settings.manageModels')}
             </Button>
@@ -336,20 +387,49 @@ export default function AppShell() {
                setLang(next);
                window.parallelchat?.invoke('parallelchat/i18n/set', next);
              }}
-             className="ml-1"
+             className="ml-2"
              title={t('language.switch')}
            >
-             <TabsList className="h-8 rounded-md">
-               <TabsTrigger value="en" className="px-2 h-8 text-xs">EN</TabsTrigger>
-               <TabsTrigger value="zh-CN" className="px-2 h-8 text-xs">中文</TabsTrigger>
+             <TabsList className="h-9 rounded-lg bg-muted/50 backdrop-blur-sm">
+                <TabsTrigger value="en" className="px-3 h-8 text-xs font-medium rounded-md">EN</TabsTrigger>
+                <TabsTrigger value="zh-CN" className="px-3 h-8 text-xs font-medium rounded-md">中文</TabsTrigger>
              </TabsList>
            </Tabs>
+
+            {!isMac && (
+              <div className="pc-window-controls ml-2 flex items-center gap-1">
+                <button
+                  className="pc-no-drag pc-win-btn pc-win-min"
+                  aria-label={t('window.minimize')}
+                  title={t('window.minimize')}
+                  onClick={() => window.parallelchat?.send('parallelchat/window/minimize')}
+                >
+                  <Minus className="size-4" aria-hidden />
+                </button>
+                <button
+                  className="pc-no-drag pc-win-btn pc-win-max"
+                  aria-label={isMaximized ? t('window.restore') : t('window.maximize')}
+                  title={isMaximized ? t('window.restore') : t('window.maximize')}
+                  onClick={() => window.parallelchat?.send('parallelchat/window/toggle-maximize')}
+                >
+                  <Square className="size-4" aria-hidden />
+                </button>
+                <button
+                  className="pc-no-drag pc-win-btn pc-win-close"
+                  aria-label={t('window.close')}
+                  title={t('window.close')}
+                  onClick={() => window.parallelchat?.send('parallelchat/window/close')}
+                >
+                  <X className="size-4" aria-hidden />
+                </button>
+              </div>
+            )}
           </div>
         </div>
 
         <Workspace />
 
-        <div className="bg-white shadow-lg border-t border-slate-100">
+        <div className="bg-card/95 backdrop-blur-md shadow-xl border-t border-border/50">
           <GlobalInputBar
             layoutMode={layoutMode}
             activeGroupId={currentGroupTabValue}
@@ -362,11 +442,11 @@ export default function AppShell() {
 
         {tabMenu && (
           <div
-            className="fixed z-50 min-w-[140px] rounded-lg bg-white shadow-xl ring-1 ring-slate-200 text-slate-700"
+            className="fixed z-50 min-w-[150px] rounded-xl bg-card shadow-2xl ring-2 ring-border/50 backdrop-blur-md"
             style={{ left: tabMenu.x, top: tabMenu.y }}
             onClick={(e) => e.stopPropagation()}
           >
-           <button className="w-full text-left px-3 py-2 hover:bg-slate-50 rounded-lg transition-colors" onClick={doReload}>{t('view.reload')}</button>
+           <button className="w-full text-left px-4 py-2.5 text-sm font-medium text-foreground hover:bg-muted/80 rounded-xl transition-all duration-200 hover:scale-[1.02]" onClick={doReload}>{t('view.reload')}</button>
           </div>
         )}
       </main>

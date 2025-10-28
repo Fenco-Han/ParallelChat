@@ -2,27 +2,54 @@
 @import "tailwindcss";
 
 :root {
-  --background: 0 0% 100%;
-  --foreground: 222.2 84% 4.9%;
-  --primary: 221.2 83.2% 53.3%;
-  --primary-foreground: 210 40% 98%;
-  --secondary: 210 40% 96.1%;
-  --secondary-foreground: 222.2 47.4% 11.2%;
-  --accent: 210 40% 96.1%;
-  --accent-foreground: 222.2 47.4% 11.2%;
-  --muted: 210 40% 96.1%;
-  --muted-foreground: 215.4 16.3% 46.9%;
-  --border: 214.3 31.8% 91.4%;
-  --input: 214.3 31.8% 91.4%;
-  --ring: 221.2 83.2% 53.3%;
-  --popover: 0 0% 100%;
-  --popover-foreground: 222.2 84% 4.9%;
-  --card: 0 0% 100%;
-  --card-foreground: 222.2 84% 4.9%;
-  --radius: 0.5rem;
-  /* Destructive color tokens for danger actions */
-  --destructive: 0 84% 60%; /* red-500 */
-  --destructive-foreground: 210 40% 98%; /* white */
+  /* Main theme color: #FCFBF9 (warm cream white) */
+  --background: 40 40% 98.6%; /* #FCFBF9 */
+  --foreground: 30 10% 20%; /* Deep warm gray for text */
+
+  /* Primary: Warm golden brown accent */
+  --primary: 30 45% 55%; /* Golden brown */
+  --primary-foreground: 40 40% 98%;
+
+  /* Secondary: Soft neutral tones */
+  --secondary: 35 20% 92%;
+  --secondary-foreground: 30 10% 25%;
+
+  /* Accent: Richer warm tone for emphasis */
+  --accent: 25 50% 60%;
+  --accent-foreground: 30 10% 20%;
+
+  /* Muted: Subtle background elements */
+  --muted: 35 15% 90%;
+  --muted-foreground: 30 8% 45%;
+
+  /* Borders and inputs */
+  --border: 35 20% 88%;
+  --input: 35 20% 88%;
+  --ring: 30 45% 55%;
+
+  /* Popovers and cards */
+  --popover: 40 40% 99%;
+  --popover-foreground: 30 10% 20%;
+  --card: 40 35% 97%;
+  --card-foreground: 30 10% 20%;
+
+  /* Radius: More modern, larger rounded corners */
+  --radius: 0.75rem;
+
+  /* Destructive: Softer red that fits the warm palette */
+  --destructive: 0 70% 58%;
+  --destructive-foreground: 40 40% 98%;
+
+  /* Custom gradients */
+  --gradient-primary: linear-gradient(135deg, hsl(30 45% 55%) 0%, hsl(25 50% 60%) 100%);
+  --gradient-card: linear-gradient(145deg, hsl(40 40% 99%) 0%, hsl(40 35% 97%) 100%);
+  --gradient-subtle: linear-gradient(180deg, hsl(40 30% 96%) 0%, hsl(40 40% 98%) 100%);
+
+  /* Shadows */
+  --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+  --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.08), 0 2px 4px -1px rgba(0, 0, 0, 0.04);
+  --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.08), 0 4px 6px -2px rgba(0, 0, 0, 0.04);
+  --shadow-xl: 0 20px 25px -5px rgba(0, 0, 0, 0.08), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
 }
 
 /* —— Tabs 运行中动效：方案A 旋转渐变边框 —— */
@@ -31,9 +58,10 @@
 @keyframes pc-flash { 0%{opacity:0;} 20%{opacity:.6;} 100%{opacity:0;} }
 
 :root {
-  --pc-ring1: #93c5fd; /* blue-300 */
-  --pc-ring2: #60a5fa; /* blue-400 */
-  --pc-ring3: #3b82f6; /* blue-500 */
+  /* Tab animation colors - warm golden brown gradients */
+  --pc-ring1: hsl(30 60% 70%); /* Light golden */
+  --pc-ring2: hsl(30 50% 60%); /* Medium golden */
+  --pc-ring3: hsl(25 55% 55%); /* Rich golden brown */
 }
 
 .pc-tab { position: relative; }
@@ -55,6 +83,47 @@
 .pc-tab[data-complete="true"]::before {
   content: '';
   position: absolute; inset: 0; border-radius: inherit;
-  box-shadow: 0 0 0 1px rgba(59,130,246,.35), 0 0 6px rgba(59,130,246,.20);
+  box-shadow: 0 0 0 1px hsl(30 50% 60% / 0.4), 0 0 8px hsl(30 55% 55% / 0.25);
   opacity: 0; animation: pc-flash 240ms ease forwards; pointer-events: none;
 }
+
+/* Smooth transitions for all interactive elements */
+* {
+  transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* Utility classes for gradients */
+.bg-gradient-primary {
+  background: var(--gradient-primary);
+}
+
+.bg-gradient-card {
+  background: var(--gradient-card);
+}
+
+.bg-gradient-subtle {
+  background: var(--gradient-subtle);
+}
+
+/* —— 自定义标题栏拖拽区域 —— */
+.pc-titlebar { -webkit-app-region: drag; }
+.pc-no-drag { -webkit-app-region: no-drag; }
+
+/* —— 窗口控制按钮（跨平台样式） —— */
+.pc-window-controls { height: 28px; }
+.pc-win-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 22px;
+  border-radius: 6px;
+  background: hsl(var(--muted) / 0.6);
+  color: hsl(var(--foreground));
+  box-shadow: var(--shadow-sm);
+}
+.pc-win-btn:hover { background: hsl(var(--muted) / 0.9); }
+.pc-win-close:hover { background: hsl(var(--destructive) / 0.15); color: hsl(var(--destructive)); }
+
+/* macOS: 按钮放在左侧更符合习惯（若在左侧渲染） */
+.is-mac .pc-window-controls { order: -1; }

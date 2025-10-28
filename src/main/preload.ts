@@ -55,7 +55,15 @@ export type Channels =
   | 'parallelchat/update/available'
   | 'parallelchat/update/downloading'
   | 'parallelchat/update/downloaded'
-  | 'parallelchat/update/error';
+  | 'parallelchat/update/error'
+  // —— 窗口控制（自定义标题栏） ——
+  | 'parallelchat/window/minimize'
+  | 'parallelchat/window/maximize'
+  | 'parallelchat/window/unmaximize'
+  | 'parallelchat/window/toggle-maximize'
+  | 'parallelchat/window/close'
+  | 'parallelchat/window/fullscreen/toggle'
+  | 'parallelchat/window/state';
 
 // 兼容 ERB 原有的 electronHandler，用于示例交互（不建议在业务中扩展它）。
 const electronHandler = {

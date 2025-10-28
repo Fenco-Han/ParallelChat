@@ -454,10 +454,10 @@ export default function GlobalInputBar({
   };
 
   return (
-    <div className="p-2">
+    <div className="p-3">
       {/* 统一的输入框容器 */}
       <div
-          className={`relative border ${isDragging ? 'border-blue-400 ring-2 ring-blue-200' : 'border-gray-200'} rounded-lg bg-white shadow-sm hover:shadow-md transition-shadow duration-200`}
+          className={`relative border ${isDragging ? 'border-primary ring-2 ring-primary/20' : 'border-border'} rounded-2xl bg-card shadow-md hover:shadow-lg transition-all duration-300 backdrop-blur-sm`}
           onDragEnter={handleDragEnter}
           onDragOver={handleDragOver}
           onDragLeave={handleDragLeave}
@@ -465,19 +465,19 @@ export default function GlobalInputBar({
         >
         {/* 输入区域 */}
         {!collapsed && (
-          <div className="p-3">
+          <div className="p-4">
             {/* 附件预览区 */}
             {attachments.length > 0 && (
               <div className="mb-2 flex flex-wrap gap-2">
                 {attachments.map(att => (
-                  <div key={att.id} className="relative border rounded-md p-2 flex items-center gap-2 bg-gray-50">
+                  <div key={att.id} className="relative border border-border rounded-xl p-2.5 flex items-center gap-2 bg-muted/40 hover:bg-muted/60 transition-all duration-200 hover:scale-[1.02] shadow-sm">
                     {att.kind === 'image' && att.dataUrl ? (
                       <img src={att.dataUrl} alt={att.name} className="w-12 h-12 object-cover rounded-sm" />
                     ) : (
-                      <div className="w-12 h-12 bg-gray-200 rounded-sm flex items-center justify-center text-gray-600 text-xs">FILE</div>
+                      <div className="w-12 h-12 bg-muted rounded-lg flex items-center justify-center text-muted-foreground text-xs font-semibold shadow-inner">FILE</div>
                     )}
-                    <div className="max-w-[200px] truncate text-sm">{att.name}</div>
-                    <button className="absolute -top-2 -right-2 w-6 h-6 rounded-full bg-gray-200 hover:bg-gray-300 text-gray-700 flex items-center justify-center" onClick={() => removeAttachment(att.id)} aria-label="移除附件">×</button>
+                    <div className="max-w-[200px] truncate text-sm font-medium text-foreground">{att.name}</div>
+                    <button className="absolute -top-2 -right-2 w-6 h-6 rounded-full bg-destructive/90 hover:bg-destructive text-destructive-foreground flex items-center justify-center shadow-md hover:scale-110 transition-all duration-200" onClick={() => removeAttachment(att.id)} aria-label="移除附件">×</button>
                   </div>
                 ))}
               </div>
@@ -492,14 +492,14 @@ export default function GlobalInputBar({
               onCompositionEnd={() => setIsComposing(false)}
               onKeyDown={onKeyDown}
               onPaste={handlePaste}
-              className="min-h-[40px] max-h-[100px] border-0 resize-none overflow-y-auto focus:ring-0 focus:outline-none p-0 text-base"
+              className="min-h-[40px] max-h-[100px] border-0 resize-none overflow-y-auto focus:ring-0 focus:outline-none p-0 text-base bg-transparent placeholder:text-muted-foreground/60"
               style={{ boxShadow: 'none' }}
             />
           </div>
         )}
 
         {/* 底部控制区域 */}
-        <div className="flex items-center justify-between px-2 py-1 border-t border-gray-100">
+        <div className="flex items-center justify-between px-3 py-2.5 border-t border-border/50 bg-muted/20">
           {/* 模型选择区域 */}
           <div className="flex items-center gap-3 flex-1">
             {availableProviders.length > 0 && (
@@ -509,7 +509,7 @@ export default function GlobalInputBar({
                   <button
                     type="button"
                     onClick={openSelectDialog}
-                    className="w-8 h-8 rounded-full flex items-center justify-center transition-all duration-200 bg-gray-100 hover:bg-gray-200 text-gray-700"
+                    className="w-9 h-9 rounded-full flex items-center justify-center transition-all duration-200 bg-muted hover:bg-muted/80 text-foreground shadow-sm hover:shadow-md hover:scale-110"
                     aria-label="添加附件"
                   >
                     <AddIcon />
@@ -517,7 +517,7 @@ export default function GlobalInputBar({
                 </div>
 
                 {/* 分隔线 */}
-                <div className="w-px h-5 bg-gray-200" />
+                <div className="w-px h-6 bg-border" />
 
                 {/* 全选复选框 */}
                 <div className="flex items-center gap-1">
@@ -526,15 +526,15 @@ export default function GlobalInputBar({
                     onCheckedChange={toggleAll}
                     aria-checked={isIndeterminate ? 'mixed' : isAllSelected}
                   />
-                  <Label className="text-xs text-gray-600">{t('input.selectAll')}</Label>
+                  <Label className="text-xs text-foreground font-semibold cursor-pointer">{t('input.selectAll')}</Label>
                 </div>
 
                 {/* 具体模型复选框列表 */}
                 <div className="flex items-center gap-2 flex-wrap">
                   {availableProviders.map((p) => (
-                    <label key={p.id} className="flex items-center gap-1 text-xs bg-gray-50 px-2 py-1 rounded-md border border-gray-200">
+                    <label key={p.id} className="flex items-center gap-1.5 text-xs bg-muted/60 px-3 py-1.5 rounded-lg border border-border/50 hover:bg-muted hover:shadow-sm transition-all duration-200 cursor-pointer hover:scale-[1.02]">
                       <Checkbox checked={!!selected[p.id]} onCheckedChange={() => toggle(p.id)} />
-                      <span className="truncate max-w-[120px]">{p.name || p.id}</span>
+                      <span className="truncate max-w-[120px] font-medium text-foreground">{p.name || p.id}</span>
                     </label>
                   ))}
                 </div>
@@ -548,7 +548,7 @@ export default function GlobalInputBar({
             <button
               type="button"
               onClick={() => setPromptOpen(true)}
-              className="h-8 w-8 rounded-md bg-gray-100 hover:bg-gray-200 flex items-center justify-center"
+              className="h-9 w-9 rounded-lg bg-muted/80 hover:bg-muted text-foreground flex items-center justify-center shadow-sm hover:shadow-md transition-all duration-200 hover:scale-110"
               aria-label="提示词"
               title="提示词"
             >
@@ -558,7 +558,7 @@ export default function GlobalInputBar({
             <button
               type="button"
               onClick={() => setCollapsed(!collapsed)}
-              className="h-8 w-8 rounded-md bg-gray-100 hover:bg-gray-200 flex items-center justify-center"
+              className="h-9 w-9 rounded-lg bg-muted/80 hover:bg-muted text-foreground flex items-center justify-center shadow-sm hover:shadow-md transition-all duration-200 hover:scale-110"
               aria-label={collapsed ? t('input.expand') : t('input.collapse')}
             >
               <CollapseIcon collapsed={collapsed} />
@@ -569,10 +569,10 @@ export default function GlobalInputBar({
               onClick={send}
               disabled={!canSend}
               className={`
-                ml-3 w-10 h-10 rounded-full flex items-center justify-center transition-all duration-200
+                ml-3 w-11 h-11 rounded-full flex items-center justify-center transition-all duration-300
                 ${canSend
-                  ? 'bg-blue-500 hover:bg-blue-600 text-white shadow-md hover:shadow-lg'
-                  : 'bg-gray-300 text-gray-500 cursor-not-allowed'
+                  ? 'bg-gradient-primary text-primary-foreground shadow-lg hover:shadow-xl hover:scale-110 active:scale-95'
+                  : 'bg-muted text-muted-foreground cursor-not-allowed opacity-50'
                 }
               `}
             >

@@ -20,13 +20,14 @@ const scrollbarStyles = `
   }
 
   .custom-scrollbar::-webkit-scrollbar-thumb {
-    background-color: #cbd5e1;
+    background: linear-gradient(180deg, hsl(30 30% 75%) 0%, hsl(30 25% 70%) 100%);
     border-radius: 3px;
-    transition: background-color 0.2s ease;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   }
 
   .custom-scrollbar::-webkit-scrollbar-thumb:hover {
-    background-color: #94a3b8;
+    background: linear-gradient(180deg, hsl(30 35% 65%) 0%, hsl(30 30% 60%) 100%);
+    box-shadow: 0 0 8px hsl(30 30% 60% / 0.3);
   }
 
   .custom-scrollbar::-webkit-scrollbar-corner {
@@ -147,7 +148,7 @@ function SidebarUpdateFooter() {
   };
 
   return (
-    <div className="px-3 py-3 border-t border-slate-200 bg-white/80">
+    <div className="px-3 py-3 border-t border-border bg-gradient-subtle backdrop-blur-sm">
       <div className="flex items-center justify-between gap-2">
         <a
           href="https://www.parallelchat.top/"
@@ -158,28 +159,28 @@ function SidebarUpdateFooter() {
         >
           <GlobeIcon size={16} />
         </a>
-        <div className="flex-1 text-xs text-slate-600 truncate">
+        <div className="flex-1 text-xs text-muted-foreground truncate">
           {t('sidebar.footerVersion', { version: appVersion || '-' })}
         </div>
         <div className="flex items-center gap-2">
           {updateDownloaded ? (
             <button
               onClick={installUpdate}
-              className="text-xs text-green-700 hover:text-green-800 hover:underline"
+              className="text-xs font-medium text-green-700 hover:text-green-800 hover:underline transition-colors"
             >
               {t('sidebar.installNow')}
             </button>
           ) : availableVersion ? (
             <button
               onClick={startUpdateCheck}
-              className="text-xs text-blue-700 hover:text-blue-800 hover:underline"
+              className="text-xs font-medium text-primary hover:text-accent hover:underline transition-colors"
               title={t('sidebar.updateAvailable', { version: availableVersion })}
             >
               {t('sidebar.updateAvailable', { version: availableVersion })}
             </button>
           ) : null}
           {typeof updateProgress === 'number' && !updateDownloaded && updateProgress > 0 && (
-            <span className="text-[11px] text-slate-500">{t('sidebar.updating')} {updateProgress}%</span>
+            <span className="text-[11px] text-muted-foreground font-medium">{t('sidebar.updating')} {updateProgress}%</span>
           )}
           {updateError && (
             <span className="text-[11px] text-red-600" title={updateError}>!</span>
@@ -282,16 +283,16 @@ export default function SessionSidebar() {
   return (
     <>
       <style>{scrollbarStyles}</style>
-      <aside className="w-56 shrink-0 bg-slate-50/80 backdrop-blur-sm flex flex-col">
+      <aside className="w-56 shrink-0 bg-gradient-subtle backdrop-blur-md flex flex-col border-r border-border/50 shadow-sm">
       {/* 头部 */}
-      <div className=" px-4 py-[10px] bg-white/90 backdrop-blur-sm flex items-center">
+      <div className="px-4 py-3 bg-card/95 backdrop-blur-md flex items-center border-b border-border/50 shadow-sm">
         <div className="flex items-center justify-between w-full">
-          <h2 className="font-semibold text-slate-800">{t('sidebar.history')}</h2>
+          <h2 className="font-semibold text-foreground text-base">{t('sidebar.history')}</h2>
           <div className="flex items-center gap-2">
             {hasSessions && (
               <button
                 onClick={clearAll}
-                className="flex items-center justify-center w-8 h-8 rounded hover:bg-red-50 text-slate-500 hover:text-red-600 transition-colors"
+                className="flex items-center justify-center w-8 h-8 rounded-lg hover:bg-red-50 text-muted-foreground hover:text-red-600 transition-all duration-200 hover:scale-105"
                 title={t('sidebar.clearAll')}
               >
                 <TrashIcon size={14} />
@@ -301,7 +302,7 @@ export default function SessionSidebar() {
               variant="outline"
               size="sm"
               onClick={startNew}
-              className="h-8 px-2 text-xs tracking-tight font-medium bg-blue-50 border-blue-200 text-blue-700 hover:bg-blue-100 hover:border-blue-300"
+              className="h-8 px-3 text-xs tracking-tight font-semibold bg-gradient-primary text-primary-foreground hover:opacity-90 border-0 shadow-md hover:shadow-lg transition-all duration-200"
             >
 
               <span className="ml-0.5">{t('sidebar.newSession')}</span>
@@ -319,9 +320,9 @@ export default function SessionSidebar() {
         }}
       >
         {!hasSessions && (
-          <div className="p-4 text-center">
-            <div className="text-sm text-slate-500 mb-2">{t('sidebar.noSessions')}</div>
-            <div className="text-xs text-slate-400">{t('sidebar.noSessionsTip')}</div>
+          <div className="p-6 text-center">
+            <div className="text-sm text-muted-foreground font-medium mb-2">{t('sidebar.noSessions')}</div>
+            <div className="text-xs text-muted-foreground/70">{t('sidebar.noSessionsTip')}</div>
           </div>
         )}
 
@@ -330,10 +331,10 @@ export default function SessionSidebar() {
             {sessions.map((s) => (
               <div
                 key={s.id}
-                className={`group mx-2 mb-2 rounded-lg transition-all duration-200 ${
+                className={`group mx-2 mb-2 rounded-xl transition-all duration-300 ${
                   activeId === s.id
-                    ? 'bg-blue-50/80 shadow-sm ring-1 ring-blue-200/50'
-                    : 'bg-white/60 hover:bg-white/80 hover:shadow-sm'
+                    ? 'bg-gradient-card shadow-md ring-2 ring-primary/20 scale-[1.02]'
+                    : 'bg-card/60 hover:bg-card hover:shadow-lg hover:scale-[1.01]'
                 }`}
               >
                 <div className="p-3">
@@ -345,21 +346,21 @@ export default function SessionSidebar() {
                         value={editingTitle}
                         onChange={(e) => setEditingTitle(e.target.value)}
                         onKeyDown={handleKeyDown}
-                        className="w-full px-2 py-1 text-sm border border-slate-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                        className="w-full px-3 py-2 text-sm bg-background border border-input rounded-lg focus:outline-none focus:ring-2 focus:ring-ring focus:border-transparent transition-all duration-200"
                         placeholder={t('sidebar.inputTitle')}
                         autoFocus
                       />
                       <div className="flex items-center gap-1">
                         <button
                           onClick={saveEdit}
-                          className="flex items-center justify-center w-6 h-6 rounded text-green-600 hover:bg-green-50 transition-colors"
+                          className="flex items-center justify-center w-7 h-7 rounded-lg text-green-600 hover:bg-green-50 transition-all duration-200 hover:scale-110"
                           title={t('actions.save')}
                         >
                           <CheckIcon size={14} />
                         </button>
                         <button
                           onClick={cancelEdit}
-                          className="flex items中心 justify-center w-6 h-6 rounded text-slate-500 hover:bg-slate-100 transition-colors"
+                          className="flex items-center justify-center w-7 h-7 rounded-lg text-muted-foreground hover:bg-muted transition-all duration-200 hover:scale-110"
                           title={t('actions.cancel')}
                         >
                           <CancelIcon size={14} />
@@ -373,12 +374,12 @@ export default function SessionSidebar() {
                         className="flex-1 text-left min-w-0"
                         onClick={() => activate(s.id)}
                       >
-                        <div className={`text-sm font-medium truncate ${
-                          activeId === s.id ? 'text-blue-800' : 'text-slate-800'
+                        <div className={`text-sm font-semibold truncate ${
+                          activeId === s.id ? 'text-primary' : 'text-foreground'
                         }`}>
                           {s.title || t('sidebar.untitled')}
                         </div>
-                        <div className="text-xs text-slate-500 mt-1">
+                        <div className="text-xs text-muted-foreground mt-1.5 font-medium">
                           {new Date(s.createdAt).toLocaleString(i18n.language, {
                             month: 'short',
                             day: 'numeric',
@@ -394,7 +395,7 @@ export default function SessionSidebar() {
                             e.stopPropagation();
                             beginEdit(s);
                           }}
-                          className="flex items-center justify-center w-7 h-7 rounded hover:bg-slate-200 text-slate-600 hover:text-slate-800 transition-colors"
+                          className="flex items-center justify-center w-7 h-7 rounded-lg hover:bg-muted/80 text-muted-foreground hover:text-foreground transition-all duration-200 hover:scale-110"
                           title={t('sidebar.editTitle')}
                         >
                           <EditIcon size={14} />
@@ -404,7 +405,7 @@ export default function SessionSidebar() {
                             e.stopPropagation();
                             del(s.id);
                           }}
-                          className="flex items-center justify-center w-7 h-7 rounded hover:bg-red-100 text-slate-500 hover:text-red-600 transition-colors"
+                          className="flex items-center justify-center w-7 h-7 rounded-lg hover:bg-red-50 text-muted-foreground hover:text-red-600 transition-all duration-200 hover:scale-110"
                           title={t('sidebar.deleteSession')}
                         >
                           <DeleteIcon size={14} />
