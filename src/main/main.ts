@@ -93,9 +93,9 @@ const createWindow = async () => {
     height: 900,
     autoHideMenuBar: true,
     icon: getAssetPath('icon.png'),
-    // 无边框窗口，使用自定义标题栏与控制按钮
-    frame: false,
-    titleBarStyle: process.platform === 'darwin' ? 'hidden' : undefined,
+    // macOS 保留原生标题栏（hiddenInset，内容下沉）；其他平台使用无边框自绘标题栏
+    frame: process.platform === 'darwin' ? true : false,
+    titleBarStyle: process.platform === 'darwin' ? 'hiddenInset' : undefined,
     webPreferences: {
       preload: app.isPackaged
         ? path.join(__dirname, 'preload.js')

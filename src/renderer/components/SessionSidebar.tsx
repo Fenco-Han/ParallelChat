@@ -284,7 +284,7 @@ export default function SessionSidebar() {
     <>
       <style>{scrollbarStyles}</style>
       <aside className="w-56 shrink-0 bg-gradient-subtle backdrop-blur-md flex flex-col border-r border-border/50 shadow-sm">
-      {/* 头部 */}
+      {/* 头部（移回顶部） */}
       <div className="px-4 py-3 bg-card/95 backdrop-blur-md flex items-center border-b border-border/50 shadow-sm">
         <div className="flex items-center justify-between w-full">
           <h2 className="font-semibold text-foreground text-base">{t('sidebar.history')}</h2>
@@ -304,7 +304,6 @@ export default function SessionSidebar() {
               onClick={startNew}
               className="h-8 px-3 text-xs tracking-tight font-semibold bg-gradient-primary text-primary-foreground hover:opacity-90 border-0 shadow-md hover:shadow-lg transition-all duration-200"
             >
-
               <span className="ml-0.5">{t('sidebar.newSession')}</span>
             </Button>
           </div>
