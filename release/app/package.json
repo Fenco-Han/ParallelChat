@@ -1,6 +1,6 @@
 {
   "name": "parallelchat",
-  "version": "1.0.8",
+  "version": "1.0.9",
   "description": "ParallelChat 一次提问，多个AI同时作答",
   "license": "MIT",
   "author": {
