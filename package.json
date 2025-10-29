@@ -204,13 +204,13 @@
     "asar": true,
     "afterSign": ".erb/scripts/notarize.js",
     "asarUnpack": "**\\*.{node,dll}",
+    "electronDist": "node_modules/electron/dist",
     "files": [
       "dist",
       "node_modules",
       "package.json"
     ],
     "mac": {
-      "notarize": false,
       "target": [
         {
           "target": "dmg",

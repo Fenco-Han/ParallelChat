@@ -29,3 +29,4 @@ npm-debug.log.*
 *.scss.d.ts
 package-lock.json
 release/app/package-lock.json
+.env

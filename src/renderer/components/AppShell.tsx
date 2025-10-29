@@ -285,7 +285,7 @@ export default function AppShell() {
         className={`pc-titlebar flex items-center justify-between px-4 py-2 bg-gradient-card backdrop-blur-md shadow-md border-b border-border/50`}
         onDoubleClick={() => window.parallelchat?.send('parallelchat/window/toggle-maximize')}
       >
-        <div className={`flex items-center gap-2 flex-1 ${isMac ? 'ml-52' : ''}`}>
+        <div className={`flex items-center gap-2 flex-1 ${isMac ? 'ml-45' : ''}`}>
           {/* macOS 下不显示自绘窗口按钮，保留系统原生 */}
           {layoutMode === 'tabs' && providers.length > 0 && (
             <Tabs value={activeId} onValueChange={activateTab} className="flex-1">
