@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Button } from './ui/button';
+import { Github } from 'lucide-react';
 
 type SessionItem = {
   id: string;
@@ -71,15 +72,7 @@ const PlusIcon = ({ size = 16 }: { size?: number }) => (
   </svg>
 );
 
-// 新增：官网图标
-const GlobeIcon = ({ size = 16 }: { size?: number }) => (
-  <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" role="img" aria-label="官网">
-    <circle cx="12" cy="12" r="10" />
-    <path d="M2 12h20" />
-    <path d="M12 2a15.3 15.3 0 0 1 0 20" />
-    <path d="M12 2a15.3 15.3 0 0 0 0 20" />
-  </svg>
-);
+// 新增：GitHub 图标使用 lucide-react
 
 const TrashIcon = ({ size = 16 }: { size?: number }) => (
   <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -151,13 +144,13 @@ function SidebarUpdateFooter() {
     <div className="px-3 py-3 border-t border-border bg-gradient-subtle backdrop-blur-sm">
       <div className="flex items-center justify-between gap-2">
         <a
-          href="https://www.parallelchat.top/"
+          href="https://github.com/woniu9524/ParallelChat"
           target="_blank"
           rel="noreferrer"
           className="inline-flex items-center gap-1 text-slate-700 hover:text-slate-900"
-          title="官网"
+          title="GitHub"
         >
-          <GlobeIcon size={16} />
+          <Github size={16} />
         </a>
         <div className="flex-1 text-xs text-muted-foreground truncate">
           {t('sidebar.footerVersion', { version: appVersion || '-' })}
