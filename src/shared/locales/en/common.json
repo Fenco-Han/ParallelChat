@@ -19,8 +19,6 @@
   "settings": {
     "manageModels": "Model Management",
     "aiManagement": "AI Management",
-    "securityNote": "Due to security restrictions, Google account login is unavailable. Use non-Google accounts for Qwen, ChatGPT, Claude; Gemini cannot log in.",
-    "recommendTabsLayout": "If more than 3 models are enabled, Tabs layout is recommended.",
     "enable": "Enable",
     "clearing": "Clearing...",
     "clearCache": "Clear Cache",

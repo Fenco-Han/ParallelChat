@@ -69,8 +69,7 @@ ParallelChat is a multi‑AI collaboration assistant that lets you use several m
 
 ## Notes
 
-- Google account login is unavailable: Google sign‑in is restricted in Electron apps and is currently not supported.
-- For Qwen, GPT, Grok, Claude: use non‑Google accounts; for Gemini there is currently no viable login method.
+- Gemini is supported for sign‑in and use.
 - Uses the latest capabilities directly from each official website; no keys or extra fees required.
 
 ---
@@ -109,11 +108,7 @@ Custom extensions are not currently provided. You can submit an issue and we’l
 Sessions and cache are stored locally and can be cleared at any time; login information remains in each official website’s web session.
 </details>
 
-<details>
-<summary><strong>Why can’t I use a Google account to log in?</strong></summary>
-<br>
-Google accounts are restricted in Electron applications, so login isn’t possible. For Qwen, GPT, Grok, Claude you can use non‑Google accounts; for Gemini there’s currently no viable login method.
-</details>
+ 
 
 ---
 

@@ -282,19 +282,19 @@ export default function AppShell() {
     <div className="h-screen w-screen flex flex-col overflow-hidden bg-background text-foreground">
       {/* 顶部全宽标题栏 */}
       <div
-        className={`pc-titlebar flex items-center justify-between px-3 py-1.5 bg-gradient-card backdrop-blur-md shadow-md border-b border-border/50`}
+        className={`pc-titlebar flex items-center justify-between px-2.5 py-1.5 bg-gradient-card backdrop-blur-md shadow-md border-b border-border/50`}
         onDoubleClick={() => window.parallelchat?.send('parallelchat/window/toggle-maximize')}
       >
-        <div className={`flex items-center gap-2 flex-1 ${isMac ? 'ml-45' : ''}`}>
+        <div className={`flex items-center gap-1.5 flex-1 ${isMac ? 'ml-45' : ''}`}>
           {/* macOS 下不显示自绘窗口按钮，保留系统原生 */}
           {layoutMode === 'tabs' && providers.length > 0 && (
             <Tabs value={activeId} onValueChange={activateTab} className="flex-1">
-              <TabsList className="pc-no-drag">
+              <TabsList className="pc-no-drag h-7 gap-0.5 p-0.5 bg-muted/40">
                 {providers.map((p) => (
                   <TabsTrigger
                     key={p.id}
                     value={p.id}
-                    className="pc-no-drag"
+                    className="pc-no-drag h-6 px-2.5 text-xs font-medium data-[state=active]:bg-background data-[state=active]:shadow-sm"
                     data-busy={busyMap[p.id] ? 'true' : undefined}
                     aria-busy={busyMap[p.id] ? true : undefined}
                     data-complete={completeSet.has(p.id) ? 'true' : undefined}
@@ -309,7 +309,7 @@ export default function AppShell() {
           )}
           {layoutMode === 'groups' && groups.length > 0 && (
             <Tabs value={currentGroupTabValue} onValueChange={activateGroup} className="flex-1">
-              <TabsList className="pc-no-drag">
+              <TabsList className="pc-no-drag h-7 gap-0.5 p-0.5 bg-muted/40">
                 {orderedGroupIds.map((gid) => {
                   const g = groups.find((x) => x.id === gid && (x.enabled !== false));
                   if (!g) return null;
@@ -317,7 +317,7 @@ export default function AppShell() {
                     <TabsTrigger
                       key={g.id}
                       value={g.id}
-                      className="pc-no-drag"
+                      className="pc-no-drag h-6 px-2.5 text-xs font-medium data-[state=active]:bg-background data-[state=active]:shadow-sm"
                       title={g.name || g.id}
                       onContextMenu={(e) => openGroupContextMenu(e, g.id, g.name || g.id)}
                     >
@@ -329,16 +329,16 @@ export default function AppShell() {
             </Tabs>
           )}
         </div>
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-1.5">
           {/* 分段选择器：分组 / 标签（含图标） */}
           <Tabs value={layoutMode} onValueChange={(v) => setLayoutTopDirect(v as 'groups' | 'tabs')}>
-            <TabsList className="pc-no-drag h-8">
-              <TabsTrigger value="tabs" title={t('layout.tabsTitle')} className="pc-no-drag">
-                <NotebookTabsIcon className="mr-1 size-4" aria-hidden />
+            <TabsList className="pc-no-drag h-7 gap-0.5 p-0.5 bg-muted/40">
+              <TabsTrigger value="tabs" title={t('layout.tabsTitle')} className="pc-no-drag h-6 px-2 text-xs font-medium data-[state=active]:bg-background data-[state=active]:shadow-sm">
+                <NotebookTabsIcon className="mr-1 size-3.5" aria-hidden />
                 {t('layout.tabs')}
               </TabsTrigger>
-              <TabsTrigger value="groups" title={t('layout.groupsTitle')} className="pc-no-drag">
-                <LayoutGridIcon className="mr-1 size-4" aria-hidden />
+              <TabsTrigger value="groups" title={t('layout.groupsTitle')} className="pc-no-drag h-6 px-2 text-xs font-medium data-[state=active]:bg-background data-[state=active]:shadow-sm">
+                <LayoutGridIcon className="mr-1 size-3.5" aria-hidden />
                 {t('layout.groups')}
               </TabsTrigger>
             </TabsList>
@@ -348,7 +348,7 @@ export default function AppShell() {
             variant="default"
             size="xs"
             onClick={() => setSettingsOpen(true)}
-            className="pc-no-drag text-xs font-semibold bg-gradient-primary text-primary-foreground hover:opacity-90 border-0 shadow-md hover:shadow-lg transition-all duration-200"
+            className="pc-no-drag h-7 px-2.5 text-xs font-semibold bg-gradient-primary text-primary-foreground hover:opacity-90 border-0 shadow-sm hover:shadow-md transition-all duration-200"
           >
             {t('settings.manageModels')}
           </Button>
@@ -360,24 +360,23 @@ export default function AppShell() {
               setLang(next);
               window.parallelchat?.invoke('parallelchat/i18n/set', next);
             }}
-           className="ml-2"
            title={t('language.switch')}
           >
-            <TabsList className="pc-no-drag h-8 rounded-lg bg-muted/50 backdrop-blur-sm">
-              <TabsTrigger value="en" className="pc-no-drag px-2.5 h-7 text-xs font-medium rounded-md">EN</TabsTrigger>
-              <TabsTrigger value="zh-CN" className="pc-no-drag px-2.5 h-7 text-xs font-medium rounded-md">中文</TabsTrigger>
+            <TabsList className="pc-no-drag h-7 gap-0.5 p-0.5 rounded-lg bg-muted/40">
+              <TabsTrigger value="en" className="pc-no-drag h-6 px-2 text-xs font-medium rounded-md data-[state=active]:bg-background data-[state=active]:shadow-sm">EN</TabsTrigger>
+              <TabsTrigger value="zh-CN" className="pc-no-drag h-6 px-2 text-xs font-medium rounded-md data-[state=active]:bg-background data-[state=active]:shadow-sm">中文</TabsTrigger>
             </TabsList>
           </Tabs>
 
           {!isMac && (
-            <div className="pc-window-controls ml-2 flex items-center gap-1">
+            <div className="pc-window-controls ml-1.5 flex items-center gap-0.5">
               <button
                 className="pc-no-drag pc-win-btn pc-win-min"
                 aria-label={t('window.minimize')}
                 title={t('window.minimize')}
                 onClick={() => window.parallelchat?.send('parallelchat/window/minimize')}
               >
-                <Minus className="size-4" aria-hidden />
+                <Minus className="size-3.5" aria-hidden />
               </button>
               <button
                 className="pc-no-drag pc-win-btn pc-win-max"
@@ -385,7 +384,7 @@ export default function AppShell() {
                 title={isMaximized ? t('window.restore') : t('window.maximize')}
                 onClick={() => window.parallelchat?.send('parallelchat/window/toggle-maximize')}
               >
-                <Square className="size-4" aria-hidden />
+                <Square className="size-3.5" aria-hidden />
               </button>
               <button
                 className="pc-no-drag pc-win-btn pc-win-close"
@@ -393,7 +392,7 @@ export default function AppShell() {
                 title={t('window.close')}
                 onClick={() => window.parallelchat?.send('parallelchat/window/close')}
               >
-                <X className="size-4" aria-hidden />
+                <X className="size-3.5" aria-hidden />
               </button>
             </div>
           )}

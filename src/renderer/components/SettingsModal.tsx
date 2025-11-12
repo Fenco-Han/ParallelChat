@@ -59,10 +59,28 @@ const PRESET_AI: AiProvider[] = [
     handler: 'chatgpt',
   },
   {
+    id: 'minimax',
+    name: 'Minimax',
+    url: 'https://agent.minimaxi.com/',
+    handler: 'minimax',
+  },
+  {
     id: 'copilot',
     name: 'Copilot',
     url: 'https://copilot.microsoft.com/',
     handler: 'copilot',
+  },
+  {
+    id: 'perplexity',
+    name: 'Perplexity',
+    url: 'https://www.perplexity.ai/',
+    handler: 'perplexity',
+  },
+  {
+    id: 'metaso',
+    name: 'Metaso',
+    url: 'https://metaso.cn/',
+    handler: 'metaso',
   },
   {
     id: 'claude',
@@ -278,8 +296,10 @@ export default function SettingsModal({
     const presets = [
       { id: 'group-dq', name: 'DeepSeek | Qwen', ids: ['deepseek','qwen'] },
       { id: 'group-gk', name: 'GLM | Kimi', ids: ['glm','kimi'] },
-      { id: 'group-dy', name: 'Doubao | Yuanbao', ids: ['doubao','yuanbao'] },
-      { id: 'group-cg', name: 'ChatGPT | Grok', ids: ['chatgpt','grok'] },
+      { id: 'group-dm', name: 'Doubao | Metaso', ids: ['doubao','metaso'] },
+      { id: 'group-cc', name: 'ChatGPT | Claude', ids: ['chatgpt','claude'] },
+      { id: 'group-gg', name: 'Gemini | Grok', ids: ['gemini','grok'] },
+      { id: 'group-cp', name: 'Copilot | Perplexity', ids: ['copilot','perplexity'] },
     ];
     const created = presets.map((c) => ({ id: c.id, name: c.name, modelIds: c.ids, enabled: true }));
     const next = [...created];
@@ -305,10 +325,6 @@ export default function SettingsModal({
           <DialogTitle>{t('settings.manageModels')}</DialogTitle>
         </DialogHeader>
 
-        <div className="rounded-xl border border-border/50 bg-muted/30 p-3 text-xs text-muted-foreground font-medium backdrop-blur-sm shadow-sm">
-          {t('settings.securityNote')}
-        </div>
-
         <Tabs value={settingsTab} onValueChange={(v) => setSettingsTab(v as 'labels' | 'groups')}>
           <TabsList>
             <TabsTrigger value="labels">{t('settings.labelsMode')}</TabsTrigger>
@@ -318,11 +334,6 @@ export default function SettingsModal({
           <TabsContent value="labels">
             <div>
               <div className="font-semibold text-lg mb-4 text-foreground">{t('settings.aiManagement')}</div>
-              {Object.values(enabled).filter(Boolean).length > 3 && (
-                <div className="mb-3 text-xs text-muted-foreground font-medium bg-muted/20 p-3 rounded-lg">
-                  {t('settings.recommendTabsLayout')}
-                </div>
-              )}
               <div className="grid grid-cols-2 gap-3">
                 {PRESET_AI.map((p) => (
                   <Card key={p.id} className="py-3 bg-gradient-card hover:shadow-lg transition-all duration-300 hover:scale-[1.02] border-border/50">

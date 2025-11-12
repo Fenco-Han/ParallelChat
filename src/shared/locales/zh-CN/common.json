@@ -19,8 +19,6 @@
   "settings": {
     "manageModels": "模型管理",
     "aiManagement": "AI 管理",
-    "securityNote": "受安全限制，无法使用 Google 账号登录。如果使用 Qwen、ChatGPT、Claude 必须以非 Google 账号登录；Gemini 无法登录。",
-    "recommendTabsLayout": "模型超过3个推荐使用标签模式布局",
     "enable": "启用",
     "clearing": "清除中...",
     "clearCache": "清除缓存",

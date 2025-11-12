@@ -37,10 +37,28 @@ const PRESET_AI: AiProvider[] = [
     handler: 'chatgpt',
   },
   {
+    id: 'minimax',
+    name: 'Minimax',
+    url: 'https://agent.minimaxi.com/',
+    handler: 'minimax',
+  },
+  {
     id: 'copilot',
     name: 'Copilot',
     url: 'https://copilot.microsoft.com/',
     handler: 'copilot',
+  },
+  {
+    id: 'perplexity',
+    name: 'Perplexity',
+    url: 'https://www.perplexity.ai/',
+    handler: 'perplexity',
+  },
+  {
+    id: 'metaso',
+    name: 'Metaso',
+    url: 'https://metaso.cn/',
+    handler: 'metaso',
   },
   {
     id: 'claude',

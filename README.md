@@ -69,8 +69,7 @@ ParallelChat 是一个多 AI 协作助手，让你在同一个界面里并行使
 
 ## 注意事项
 
-- 无法使用 Google 账号登录：Google 账号在 Electron 应用中受限，暂不可用。
-- 对于 Qwen、GPT、Grok、Claude：可使用非 Google 账号登录；Gemini 暂无可行登录方式。
+- Gemini 已支持登录与使用。
 - 直接使用各官网的最新能力；无需任何密钥或额外费用。
 
 ---
@@ -109,11 +108,7 @@ npm start
 会话与缓存保存在本地，可随时清理；登录信息留存在各官网的 Web 会话中。
 </details>
 
-<details>
-<summary><strong>为什么不能使用 Google 账号登录？</strong></summary>
-<br>
-Google 账号限制了在 Electron 应用中使用，因此无法登录。对于 Qwen、GPT、Grok、Claude 可使用非 Google 账号；Gemini 暂无可行登录方式。
-</details>
+ 
 
 ---
 

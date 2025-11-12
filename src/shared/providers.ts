@@ -11,5 +11,8 @@ export const PROVIDER_CATALOG: AiProvider[] = [
   { id: 'claude', name: 'Claude', url: 'https://claude.ai/', handler: 'claude' },
   { id: 'grok', name: 'Grok', url: 'https://grok.com/', handler: 'grok' },
   { id: 'copilot', name: 'Copilot', url: 'https://copilot.microsoft.com/', handler: 'copilot' },
+  { id: 'minimax', name: 'Minimax', url: 'https://agent.minimaxi.com/', handler: 'minimax' },
+  { id: 'perplexity', name: 'Perplexity', url: 'https://www.perplexity.ai/', handler: 'perplexity' },
+  { id: 'metaso', name: 'Metaso', url: 'https://metaso.cn/', handler: 'metaso' },
   { id: 'gemini', name: 'Gemini', url: 'https://gemini.google.com/app', handler: 'gemini' },
 ];

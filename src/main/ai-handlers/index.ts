@@ -9,6 +9,9 @@ import { buildScript as buildYuanbao, buildStatusScript as statusYuanbao, buildU
 import { buildScript as buildGlm, buildStatusScript as statusGlm, buildUploadCheckScript as uploadGlm } from './glm';
 import { buildScript as buildGrok, buildStatusScript as statusGrok, buildUploadCheckScript as uploadGrok } from './grok';
 import { buildScript as buildCopilot, buildStatusScript as statusCopilot, buildUploadCheckScript as uploadCopilot } from './copilot';
+import { buildScript as buildMinimax, buildStatusScript as statusMinimax, buildUploadCheckScript as uploadMinimax } from './minimax';
+import { buildScript as buildPerplexity, buildStatusScript as statusPerplexity, buildUploadCheckScript as uploadPerplexity } from './perplexity';
+import { buildScript as buildMetaso, buildStatusScript as statusMetaso, buildUploadCheckScript as uploadMetaso } from './metaso';
 
 
 
@@ -24,6 +27,9 @@ const handlers: Record<string, (text: string) => string> = {
   glm: buildGlm,
   grok: buildGrok,
   copilot: buildCopilot,
+  minimax: buildMinimax,
+  perplexity: buildPerplexity,
+  metaso: buildMetaso,
 };
 
 export function getInjectionScript(id: string, text: string): string {
@@ -43,6 +49,9 @@ const statusHandlers: Record<string, () => string> = {
   glm: statusGlm,
   grok: statusGrok,
   copilot: statusCopilot,
+  minimax: statusMinimax,
+  perplexity: statusPerplexity,
+  metaso: statusMetaso,
 };
 
 export function getStatusCheckScript(id: string): string {
@@ -63,6 +72,9 @@ const uploadHandlers: Record<string, () => string> = {
   glm: uploadGlm,
   grok: uploadGrok,
   copilot: uploadCopilot,
+  minimax: uploadMinimax,
+  perplexity: uploadPerplexity,
+  metaso: uploadMetaso,
 };
 
 export function getUploadCheckScript(id: string): string {

@@ -249,8 +249,10 @@ const createWindow = async () => {
             const presets = [
               { id: 'group-dq', name: 'DeepSeek | Qwen', ids: ['deepseek','qwen'] },
               { id: 'group-gk', name: 'GLM | Kimi', ids: ['glm','kimi'] },
-              { id: 'group-dy', name: 'Doubao | Yuanbao', ids: ['doubao','yuanbao'] },
-              { id: 'group-cg', name: 'ChatGPT | Grok', ids: ['chatgpt','grok'] },
+              { id: 'group-dm', name: 'Doubao | Metaso', ids: ['doubao','metaso'] },
+              { id: 'group-cc', name: 'ChatGPT | Claude', ids: ['chatgpt','claude'] },
+              { id: 'group-gg', name: 'Gemini | Grok', ids: ['gemini','grok'] },
+              { id: 'group-cp', name: 'Copilot | Perplexity', ids: ['copilot','perplexity'] },
             ];
             const created = presets.map((c) => ({ id: c.id, name: c.name, modelIds: c.ids, enabled: true }));
             if (created.length > 0) {
