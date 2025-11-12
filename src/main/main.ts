@@ -870,14 +870,12 @@ ipcMain.handle('parallelchat/file/read-data-url', async (_e, filePath: string) =
  * —— WebContentsView  创建与布局管理 ——
  */
 function getSanitizedUA(): string {
-  const chromeVersion = process.versions.chrome || '118.0.0.0';
-  return `Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/${chromeVersion} Safari/537.36`;
+  return `Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko)  Safari/537.36`;
 }
 function ensureSessionUA(partition: string) {
   if (patchedPartitions.has(partition)) return;
   const s = session.fromPartition(partition);
   s.webRequest.onBeforeSendHeaders((details, callback) => {
-    const chromeVersion = process.versions.chrome || '118.0.0.0';
     const ua = getSanitizedUA();
     const headers = {
       ...details.requestHeaders,
