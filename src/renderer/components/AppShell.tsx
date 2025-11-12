@@ -282,7 +282,7 @@ export default function AppShell() {
     <div className="h-screen w-screen flex flex-col overflow-hidden bg-background text-foreground">
       {/* 顶部全宽标题栏 */}
       <div
-        className={`pc-titlebar flex items-center justify-between px-4 py-2 bg-gradient-card backdrop-blur-md shadow-md border-b border-border/50`}
+        className={`pc-titlebar flex items-center justify-between px-3 py-1.5 bg-gradient-card backdrop-blur-md shadow-md border-b border-border/50`}
         onDoubleClick={() => window.parallelchat?.send('parallelchat/window/toggle-maximize')}
       >
         <div className={`flex items-center gap-2 flex-1 ${isMac ? 'ml-45' : ''}`}>
@@ -332,23 +332,23 @@ export default function AppShell() {
         <div className="flex items-center gap-2">
           {/* 分段选择器：分组 / 标签（含图标） */}
           <Tabs value={layoutMode} onValueChange={(v) => setLayoutTopDirect(v as 'groups' | 'tabs')}>
-            <TabsList className="pc-no-drag">
-             <TabsTrigger value="tabs" title={t('layout.tabsTitle')} className="pc-no-drag">
-               <NotebookTabsIcon className="mr-1 size-4" aria-hidden />
-               {t('layout.tabs')}
-             </TabsTrigger>
-             <TabsTrigger value="groups" title={t('layout.groupsTitle')} className="pc-no-drag">
-               <LayoutGridIcon className="mr-1 size-4" aria-hidden />
-               {t('layout.groups')}
-             </TabsTrigger>
+            <TabsList className="pc-no-drag h-8">
+              <TabsTrigger value="tabs" title={t('layout.tabsTitle')} className="pc-no-drag">
+                <NotebookTabsIcon className="mr-1 size-4" aria-hidden />
+                {t('layout.tabs')}
+              </TabsTrigger>
+              <TabsTrigger value="groups" title={t('layout.groupsTitle')} className="pc-no-drag">
+                <LayoutGridIcon className="mr-1 size-4" aria-hidden />
+                {t('layout.groups')}
+              </TabsTrigger>
             </TabsList>
           </Tabs>
 
           <Button
             variant="default"
-            size="sm"
+            size="xs"
             onClick={() => setSettingsOpen(true)}
-            className="pc-no-drag h-9 px-4 text-xs font-semibold bg-gradient-primary text-primary-foreground hover:opacity-90 border-0 shadow-md hover:shadow-lg transition-all duration-200"
+            className="pc-no-drag text-xs font-semibold bg-gradient-primary text-primary-foreground hover:opacity-90 border-0 shadow-md hover:shadow-lg transition-all duration-200"
           >
             {t('settings.manageModels')}
           </Button>
@@ -363,9 +363,9 @@ export default function AppShell() {
            className="ml-2"
            title={t('language.switch')}
           >
-            <TabsList className="pc-no-drag h-9 rounded-lg bg-muted/50 backdrop-blur-sm">
-              <TabsTrigger value="en" className="pc-no-drag px-3 h-8 text-xs font-medium rounded-md">EN</TabsTrigger>
-              <TabsTrigger value="zh-CN" className="pc-no-drag px-3 h-8 text-xs font-medium rounded-md">中文</TabsTrigger>
+            <TabsList className="pc-no-drag h-8 rounded-lg bg-muted/50 backdrop-blur-sm">
+              <TabsTrigger value="en" className="pc-no-drag px-2.5 h-7 text-xs font-medium rounded-md">EN</TabsTrigger>
+              <TabsTrigger value="zh-CN" className="pc-no-drag px-2.5 h-7 text-xs font-medium rounded-md">中文</TabsTrigger>
             </TabsList>
           </Tabs>
 

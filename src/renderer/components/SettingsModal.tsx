@@ -294,12 +294,12 @@ export default function SettingsModal({
 
   return (
     <Dialog open={open} onOpenChange={(v) => !v && onClose()}>
-      <DialogContent className="w-[960px] max-w-[95vw] sm:max-w-[95vw] space-y-5 bg-gradient-card backdrop-blur-md">
+      <DialogContent className="w-[960px] max-w-[95vw] sm:max-w-[95vw] space-y-4 bg-gradient-card backdrop-blur-md">
         <DialogHeader>
           <DialogTitle>{t('settings.manageModels')}</DialogTitle>
         </DialogHeader>
 
-        <div className="rounded-xl border border-border/50 bg-muted/30 p-4 text-xs text-muted-foreground font-medium backdrop-blur-sm shadow-sm">
+        <div className="rounded-xl border border-border/50 bg-muted/30 p-3 text-xs text-muted-foreground font-medium backdrop-blur-sm shadow-sm">
           {t('settings.securityNote')}
         </div>
 
@@ -317,15 +317,15 @@ export default function SettingsModal({
                   {t('settings.recommendTabsLayout')}
                 </div>
               )}
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-2 gap-3">
                 {PRESET_AI.map((p) => (
-                  <Card key={p.id} className="py-4 bg-gradient-card hover:shadow-lg transition-all duration-300 hover:scale-[1.02] border-border/50">
-                    <CardContent className="flex items-center justify-between px-5">
+                  <Card key={p.id} className="py-3 bg-gradient-card hover:shadow-lg transition-all duration-300 hover:scale-[1.02] border-border/50">
+                    <CardContent className="flex items-center justify-between px-4">
                       <div className="flex-1 min-w-0">
                         <CardTitle className="text-base font-bold truncate text-foreground">
                           {p.name}
                         </CardTitle>
-                        <div className="text-xs text-muted-foreground font-medium truncate mt-1">
+                        <div className="text-xs text-muted-foreground font-medium truncate mt-0.5">
                           {p.url}
                         </div>
                       </div>
@@ -339,7 +339,7 @@ export default function SettingsModal({
                         </div>
                         <Button
                           variant="secondary"
-                          size="sm"
+                          size="xs"
                           onClick={() => clearOne(p.id)}
                           disabled={!enabled[p.id] || clearingOne[p.id]}
                           className="font-semibold shadow-sm hover:shadow-md transition-all duration-200"
@@ -356,31 +356,31 @@ export default function SettingsModal({
 
           <TabsContent value="groups">
             <div>
-              <div className="flex items-center justify-between mb-3">
+              <div className="flex items-center justify-between mb-2.5">
                 <div className="font-semibold text-lg text-foreground">{t('settings.groups.title')}</div>
                 <div className="flex items-center gap-2">
-                  <Button size="sm" variant="secondary" onClick={createPresetGroups} className="font-semibold shadow-sm hover:shadow-md transition-all duration-200">{t('settings.groups.createPresets')}</Button>
+                  <Button size="xs" variant="secondary" onClick={createPresetGroups} className="font-semibold shadow-sm hover:shadow-md transition-all duration-200">{t('settings.groups.createPresets')}</Button>
                   {!creating && (
-                    <Button size="sm" onClick={startCreate} className="bg-gradient-primary text-primary-foreground font-semibold shadow-md hover:shadow-lg transition-all duration-200">{t('settings.groups.new')}</Button>
+                    <Button size="xs" onClick={startCreate} className="bg-gradient-primary text-primary-foreground font-semibold shadow-md hover:shadow-lg transition-all duration-200">{t('settings.groups.new')}</Button>
                   )}
                 </div>
               </div>
 
               {creating && (
                 <Card className="mb-4 bg-gradient-card shadow-md border-border/50">
-                  <CardContent className="px-5 py-4 space-y-4">
+                  <CardContent className="px-3 py-2 space-y-2.5">
                     <div>
-                      <div className="text-sm font-semibold mb-2 text-foreground">{t('settings.groups.name')}</div>
+                      <div className="text-sm font-semibold mb-1.5 text-foreground">{t('settings.groups.name')}</div>
                       <input
-                        className="w-full h-9 px-3 border border-input rounded-lg bg-background focus:ring-2 focus:ring-ring transition-all duration-200 font-medium"
+                        className="w-full h-8 px-3 border border-input rounded-lg bg-background focus:ring-2 focus:ring-ring transition-all duration-200 font-medium"
                         value={newGroupName}
                         onChange={(e) => setNewGroupName(e.target.value)}
                         placeholder={t('settings.groups.namePlaceholder') as string}
                       />
                     </div>
                     <div>
-                      <div className="text-sm font-semibold mb-2 text-foreground">{t('settings.groups.models')}</div>
-                      <div className="grid grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-1.5">
+                      <div className="text-sm font-semibold mb-1.5 text-foreground">{t('settings.groups.models')}</div>
+                      <div className="grid grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-1">
                         {PRESET_AI.map((p) => (
                           <label key={p.id} className="flex items-center gap-1 text-xs">
                             <input
@@ -393,34 +393,34 @@ export default function SettingsModal({
                         ))}
                       </div>
                     </div>
-                    <div className="flex items-center gap-2 justify-end pt-2">
-                      <Button onClick={createGroup} className="bg-gradient-primary text-primary-foreground font-semibold shadow-md hover:shadow-lg transition-all duration-200">{t('actions.save')}</Button>
-                      <Button variant="ghost" onClick={cancelCreate}>{t('actions.cancel')}</Button>
+                    <div className="flex items-center gap-1.5 justify-end pt-1">
+                      <Button size="xs" onClick={createGroup} className="bg-gradient-primary text-primary-foreground font-semibold shadow-md hover:shadow-lg transition-all duration-200">{t('actions.save')}</Button>
+                      <Button size="xs" variant="ghost" onClick={cancelCreate}>{t('actions.cancel')}</Button>
                     </div>
                   </CardContent>
                 </Card>
               )}
 
               {groups.length === 0 && !creating && (
-                <div className="text-sm text-muted-foreground font-medium bg-muted/20 p-4 rounded-lg text-center">{t('settings.groups.empty')}</div>
+                <div className="text-sm text-muted-foreground font-medium bg-muted/20 p-3 rounded-lg text-center">{t('settings.groups.empty')}</div>
               )}
 
-              <div className="grid grid-cols-2 gap-1.5">
+              <div className="grid grid-cols-2 gap-1">
                 {groups.map((g) => (
                   <Card key={g.id} className={`${g.enabled === false ? 'opacity-60' : ''} bg-gradient-card hover:shadow-lg transition-all duration-300 border-border/50`}>
-                    <CardContent className="px-4 py-3">
+                    <CardContent className="px-3 py-2">
                     {editingId === g.id ? (
-                        <div className="space-y-3">
-                          <div>
-                            <div className="text-sm font-semibold mb-2 text-foreground">{t('settings.groups.name')}</div>
-                            <input
-                              className="w-full h-8 px-3 border border-input rounded-lg bg-background focus:ring-2 focus:ring-ring transition-all duration-200 font-medium"
+                      <div className="space-y-2.5">
+                        <div>
+                          <div className="text-sm font-semibold mb-1.5 text-foreground">{t('settings.groups.name')}</div>
+                          <input
+                              className="w-full h-7 px-3 border border-input rounded-lg bg-background focus:ring-2 focus:ring-ring transition-all duration-200 font-medium"
                               value={editingName}
                               onChange={(e) => setEditingName(e.target.value)}
                             />
                           </div>
                           <div>
-                            <div className="text-sm font-semibold mb-2 text-foreground">{t('settings.groups.models')}</div>
+                            <div className="text-sm font-semibold mb-1.5 text-foreground">{t('settings.groups.models')}</div>
                             <div className="grid grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-1">
                               {PRESET_AI.map((p) => (
                                 <label key={p.id} className="flex items-center gap-1 text-xs">
@@ -434,21 +434,21 @@ export default function SettingsModal({
                               ))}
                             </div>
                           </div>
-                          <div className="flex items-center gap-1.5 justify-end pt-2">
-                            <Button size="sm" onClick={saveEdit} className="bg-gradient-primary text-primary-foreground font-semibold shadow-md hover:shadow-lg transition-all duration-200">{t('actions.save')}</Button>
-                            <Button variant="ghost" size="sm" onClick={cancelEdit}>{t('actions.cancel')}</Button>
-                            <Button variant="destructive" size="sm" onClick={() => deleteGroup(g.id)}>{t('actions.delete')}</Button>
+                          <div className="flex items-center gap-1 justify-end pt-1">
+                            <Button size="xs" onClick={saveEdit} className="bg-gradient-primary text-primary-foreground font-semibold shadow-md hover:shadow-lg transition-all duration-200">{t('actions.save')}</Button>
+                            <Button variant="ghost" size="xs" onClick={cancelEdit}>{t('actions.cancel')}</Button>
+                            <Button variant="destructive" size="xs" onClick={() => deleteGroup(g.id)}>{t('actions.delete')}</Button>
                           </div>
                         </div>
                       ) : (
                         <div className="flex items-center justify-between">
                           <div>
                             <div className="font-bold text-foreground text-sm">{g.name}</div>
-                            <div className="text-xs text-muted-foreground font-medium mt-0.5">{t('settings.groups.count', { count: g.modelIds.length })}</div>
+                            <div className="text-xs text-muted-foreground font-medium mt-0.25">{t('settings.groups.count', { count: g.modelIds.length })}</div>
                           </div>
-                          <div className="flex items-center gap-1.5">
-                            <div className="flex items-center gap-1.5">
-                              <span className="text-sm text-muted-foreground font-medium">{t('settings.enable')}</span>
+                          <div className="flex items-center gap-1">
+                            <div className="flex items-center gap-1">
+                              <span className="text-xs text-muted-foreground font-medium">{t('settings.enable')}</span>
                               <Switch
                                 checked={g.enabled !== false}
                                 onCheckedChange={async (checked) => {
@@ -468,25 +468,25 @@ export default function SettingsModal({
                                 }}
                               />
                             </div>
-                            <Button size="sm" variant="secondary" onClick={() => startEdit(g)} className="font-semibold shadow-sm hover:shadow-md transition-all duration-200">{t('actions.edit')}</Button>
-                            <Button size="sm" variant="destructive" onClick={() => deleteGroup(g.id)}>{t('actions.delete')}</Button>
+                            <Button size="xs" variant="secondary" onClick={() => startEdit(g)} className="font-semibold shadow-sm hover:shadow-md transition-all duration-200">{t('actions.edit')}</Button>
+                            <Button size="xs" variant="destructive" onClick={() => deleteGroup(g.id)}>{t('actions.delete')}</Button>
                           </div>
                         </div>
                       )}
-                  </CardContent>
-                </Card>
-              ))}
+                    </CardContent>
+                  </Card>
+                ))}
               </div>
             </div>
           </TabsContent>
         </Tabs>
 
         <DialogFooter>
-          <Button variant="ghost" onClick={onClose} disabled={saving}>
+          <Button size="xs" variant="ghost" onClick={onClose} disabled={saving}>
             {t('actions.cancel')}
           </Button>
           {settingsTab === 'labels' && (
-            <Button onClick={saveProviders} disabled={saving}>
+            <Button size="xs" onClick={saveProviders} disabled={saving}>
               {t('actions.save')}
             </Button>
           )}

@@ -164,13 +164,13 @@
 .pc-no-drag { -webkit-app-region: no-drag; }
 
 /* —— 窗口控制按钮（跨平台样式） —— */
-.pc-window-controls { height: 28px; }
+.pc-window-controls { height: 24px; }
 .pc-win-btn {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: 28px;
-  height: 22px;
+  width: 24px;
+  height: 20px;
   border-radius: 6px;
   background: hsl(var(--muted) / 0.6);
   color: hsl(var(--foreground));
