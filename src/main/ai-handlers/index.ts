@@ -8,6 +8,7 @@ import { buildScript as buildDoubao, buildStatusScript as statusDoubao, buildUpl
 import { buildScript as buildYuanbao, buildStatusScript as statusYuanbao, buildUploadCheckScript as uploadYuanbao } from './yuanbao';
 import { buildScript as buildGlm, buildStatusScript as statusGlm, buildUploadCheckScript as uploadGlm } from './glm';
 import { buildScript as buildGrok, buildStatusScript as statusGrok, buildUploadCheckScript as uploadGrok } from './grok';
+import { buildScript as buildCopilot, buildStatusScript as statusCopilot, buildUploadCheckScript as uploadCopilot } from './copilot';
 
 
 
@@ -22,6 +23,7 @@ const handlers: Record<string, (text: string) => string> = {
   yuanbao: buildYuanbao,
   glm: buildGlm,
   grok: buildGrok,
+  copilot: buildCopilot,
 };
 
 export function getInjectionScript(id: string, text: string): string {
@@ -40,6 +42,7 @@ const statusHandlers: Record<string, () => string> = {
   yuanbao: statusYuanbao,
   glm: statusGlm,
   grok: statusGrok,
+  copilot: statusCopilot,
 };
 
 export function getStatusCheckScript(id: string): string {
@@ -59,6 +62,7 @@ const uploadHandlers: Record<string, () => string> = {
   yuanbao: uploadYuanbao,
   glm: uploadGlm,
   grok: uploadGrok,
+  copilot: uploadCopilot,
 };
 
 export function getUploadCheckScript(id: string): string {

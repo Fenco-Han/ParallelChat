@@ -59,6 +59,12 @@ const PRESET_AI: AiProvider[] = [
     handler: 'chatgpt',
   },
   {
+    id: 'copilot',
+    name: 'Copilot',
+    url: 'https://copilot.microsoft.com/',
+    handler: 'copilot',
+  },
+  {
     id: 'claude',
     name: 'Claude',
     url: 'https://claude.ai/',

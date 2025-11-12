@@ -10,5 +10,6 @@ export const PROVIDER_CATALOG: AiProvider[] = [
   { id: 'chatgpt', name: 'ChatGPT', url: 'https://chatgpt.com/', handler: 'chatgpt' },
   { id: 'claude', name: 'Claude', url: 'https://claude.ai/', handler: 'claude' },
   { id: 'grok', name: 'Grok', url: 'https://grok.com/', handler: 'grok' },
+  { id: 'copilot', name: 'Copilot', url: 'https://copilot.microsoft.com/', handler: 'copilot' },
   { id: 'gemini', name: 'Gemini', url: 'https://gemini.google.com/app', handler: 'gemini' },
 ];
