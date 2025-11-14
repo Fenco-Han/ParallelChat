@@ -794,7 +794,7 @@ ipcMain.handle('parallelchat/view/upload-files', async (_e, payload: { id: strin
     });
 
     // 针对部分站点：避免重复触发站点的自动处理；其他仅派发一次 change
-    const SKIP_MANUAL_EVENTS = new Set(['kimi', 'doubao', 'chatgpt', 'grok', 'claude']);
+    const SKIP_MANUAL_EVENTS = new Set(['kimi', 'doubao', 'chatgpt', 'grok', 'claude','perplexity']);
     if (!SKIP_MANUAL_EVENTS.has(id)) {
       await view.webContents.executeJavaScript(`(function() {
         const el = document.querySelector(${JSON.stringify(selector)});
