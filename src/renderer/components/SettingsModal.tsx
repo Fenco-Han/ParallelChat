@@ -294,14 +294,14 @@ export default function SettingsModal({
       if (!ok) return;
     }
     const presets = [
-      { id: 'group-dq', name: 'DeepSeek | Qwen', ids: ['deepseek','qwen'] },
-      { id: 'group-gk', name: 'GLM | Kimi', ids: ['glm','kimi'] },
-      { id: 'group-dm', name: 'Doubao | Metaso', ids: ['doubao','metaso'] },
-      { id: 'group-cc', name: 'ChatGPT | Claude', ids: ['chatgpt','claude'] },
-      { id: 'group-gg', name: 'Gemini | Grok', ids: ['gemini','grok'] },
-      { id: 'group-cp', name: 'Copilot | Perplexity', ids: ['copilot','perplexity'] },
+      { id: 'group-dq', name: 'DeepSeek | Qwen', ids: ['deepseek','qwen'], enabled: true },
+      { id: 'group-gk', name: 'GLM | Kimi', ids: ['glm','kimi'], enabled: true },
+      { id: 'group-dm', name: 'Doubao | Metaso', ids: ['doubao','metaso'], enabled: true },
+      { id: 'group-cc', name: 'ChatGPT | Claude', ids: ['chatgpt','claude'], enabled: true },
+      { id: 'group-gg', name: 'Gemini | Grok', ids: ['gemini','grok'], enabled: false },
+      { id: 'group-cp', name: 'Copilot | Perplexity', ids: ['copilot','perplexity'], enabled: false },
     ];
-    const created = presets.map((c) => ({ id: c.id, name: c.name, modelIds: c.ids, enabled: true }));
+    const created = presets.map((c) => ({ id: c.id, name: c.name, modelIds: c.ids, enabled: c.enabled }));
     const next = [...created];
     try {
       await window.parallelchat?.invoke('parallelchat/store/set', 'aiGroups', next);
