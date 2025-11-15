@@ -215,7 +215,10 @@ export default function GlobalInputBar({
       try {
         const filePaths = attachments.map(a => a.filePath);
 
-        const waitForUploadIdle = async (id: string, timeoutMs = 20000, intervalMs = 500) => {
+        const waitForUploadIdle = async (id: string, timeoutMs = 20000, intervalMs = 500, initialDelayMs = 2000) => {
+          // 初始等待：给上传操作一些启动时间
+          await new Promise((r) => setTimeout(r, initialDelayMs));
+          
           const start = Date.now();
           while (Date.now() - start < timeoutMs) {
             let uploading = false;

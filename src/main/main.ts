@@ -774,27 +774,138 @@ ipcMain.handle('parallelchat/view/upload-files', async (_e, payload: { id: strin
   let attachedHere = false;
   try {
     if (!dbg.isAttached()) { dbg.attach('1.3'); attachedHere = true; }
-    // 获取目标 input 的 objectId
-    const evalRes: any = await dbg.sendCommand('Runtime.evaluate', {
-      expression: `document.querySelector(${JSON.stringify(selector)})`,
-      objectGroup: 'uploader',
-      includeCommandLineAPI: false,
-      silent: true,
-      returnByValue: false,
-      userGesture: true,
-    });
-    const objectId = evalRes?.result?.objectId;
-    if (!objectId) {
-      return { ok: false, reason: 'selector-not-found' };
+
+    try { await dbg.sendCommand('Page.enable', {} as any); } catch {}
+    let chooserParams: any = null;
+    let chooserHandler: any = null;
+    try { await dbg.sendCommand('Page.setInterceptFileChooserDialog', { enabled: true } as any); } catch {}
+    chooserHandler = (_event: any, method: string, params: any) => {
+      if (method === 'Page.fileChooserOpened' && !chooserParams) {
+        chooserParams = params;
+      }
+    };
+    dbg.on('message', chooserHandler);
+
+    // Gemini 特殊处理：需要先点击上传按钮打开菜单，再点击文件上传选项
+    if (id === 'gemini') {
+      try {
+        log.info(`[parallelchat][upload-files][gemini] starting special upload flow`);
+        
+        // 1. 点击主上传按钮打开菜单
+        const clickMainButton = await view.webContents.executeJavaScript(`(function() {
+          const btn = document.querySelector('button.upload-card-button.open.mat-primary');
+          if (btn) {
+            btn.click();
+            return true;
+          }
+          return false;
+        })();`, true);
+
+        if (!clickMainButton) {
+          log.warn(`[parallelchat][upload-files][gemini] main upload button not found`);
+        } else {
+          // 2. 等待菜单出现
+          await new Promise(resolve => setTimeout(resolve, 200));
+
+          // 3. 获取上传按钮的位置
+          const buttonInfo: any = await view.webContents.executeJavaScript(`(function() {
+            const button = document.querySelector('[data-test-id="local-images-files-uploader-button"]');
+            if (button) {
+              const rect = button.getBoundingClientRect();
+              return {
+                found: true,
+                x: rect.left + rect.width / 2,
+                y: rect.top + rect.height / 2,
+                rect: { left: rect.left, top: rect.top, width: rect.width, height: rect.height }
+              };
+            }
+            return { found: false };
+          })();`, true);
+
+          if (buttonInfo?.found) {
+            log.info(`[parallelchat][upload-files][gemini] button center at (${buttonInfo.x}, ${buttonInfo.y})`);
+            try {
+              // 鼠标移动到按钮位置
+              await dbg.sendCommand('Input.dispatchMouseEvent', {
+                type: 'mouseMoved',
+                x: buttonInfo.x,
+                y: buttonInfo.y,
+                button: 'left',
+                clickCount: 0,
+              });
+
+              // 鼠标按下
+              await dbg.sendCommand('Input.dispatchMouseEvent', {
+                type: 'mousePressed',
+                x: buttonInfo.x,
+                y: buttonInfo.y,
+                button: 'left',
+                clickCount: 1,
+              });
+
+              // 鼠标释放
+              await dbg.sendCommand('Input.dispatchMouseEvent', {
+                type: 'mouseReleased',
+                x: buttonInfo.x,
+                y: buttonInfo.y,
+                button: 'left',
+                clickCount: 1,
+              });
+
+              log.info(`[parallelchat][upload-files][gemini] simulated click completed`);
+            }
+            
+            // 7. 输入一个~（可选，用于触发输入框状态）
+            try {
+              await view.webContents.executeJavaScript(`(function() {
+                const input = document.querySelector('.ql-editor');
+                if (input) {
+                  input.focus(); 
+                  document.execCommand('insertText', false, '~'); 
+                  input.dispatchEvent(new Event('input', { bubbles: true })); 
+                }
+              })();`, true);
+            } catch {}
+          } else {
+            log.warn(`[parallelchat][upload-files][gemini] upload option button not found`);
+          }
+        }
+      } catch (err: any) {
+        log.error(`[parallelchat][upload-files][gemini] special flow error: ${String(err?.message || err)}`);
+      }
     }
-    // 设置文件到 input
-    await dbg.sendCommand('DOM.setFileInputFiles', {
-      objectId,
-      files: filePaths,
-    });
+
+    let usedChooser = false;
+    if (chooserParams && chooserParams.backendNodeId) {
+      try {
+        await dbg.sendCommand('DOM.setFileInputFiles', {
+          backendNodeId: chooserParams.backendNodeId,
+          files: filePaths,
+        } as any);
+        usedChooser = true;
+      } catch {}
+    }
+    if (!usedChooser) {
+      const evalRes: any = await dbg.sendCommand('Runtime.evaluate', {
+        expression: `document.querySelector(${JSON.stringify(selector)})`,
+        objectGroup: 'uploader',
+        includeCommandLineAPI: false,
+        silent: true,
+        returnByValue: false,
+        userGesture: true,
+      });
+      const objectId = evalRes?.result?.objectId;
+      if (!objectId) {
+        return { ok: false, reason: 'selector-not-found' };
+      }
+      await dbg.sendCommand('DOM.setFileInputFiles', {
+        objectId,
+        files: filePaths,
+      });
+    }
 
     // 针对部分站点：避免重复触发站点的自动处理；其他仅派发一次 change
-    const SKIP_MANUAL_EVENTS = new Set(['kimi', 'doubao', 'chatgpt', 'grok', 'claude','perplexity']);
+    const SKIP_MANUAL_EVENTS = new Set(['kimi', 'doubao', 'chatgpt', 'grok', 'claude','perplexity', 'gemini']);
     if (!SKIP_MANUAL_EVENTS.has(id)) {
       await view.webContents.executeJavaScript(`(function() {
         const el = document.querySelector(${JSON.stringify(selector)});
@@ -812,6 +923,8 @@ ipcMain.handle('parallelchat/view/upload-files', async (_e, payload: { id: strin
   } catch (err: any) {
     return { ok: false, reason: String(err?.message || err) };
   } finally {
+    try { await dbg.sendCommand('Page.setInterceptFileChooserDialog', { enabled: false } as any); } catch {}
+    try { dbg.removeListener && (dbg as any).removeListener('message', chooserHandler); } catch {}
     try { if (attachedHere && dbg.isAttached()) dbg.detach(); } catch {}
   }
 });
