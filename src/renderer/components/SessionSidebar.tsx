@@ -311,110 +311,110 @@ export default function SessionSidebar() {
           scrollbarColor: '#cbd5e1 transparent',
         }}
       >
-        {!hasSessions && (
-          <div className="p-6 text-center">
-            <div className="text-sm text-muted-foreground font-medium mb-2">{t('sidebar.noSessions')}</div>
-            <div className="text-xs text-muted-foreground/70">{t('sidebar.noSessionsTip')}</div>
-          </div>
-        )}
+          {!hasSessions && (
+            <div className="p-6 text-center">
+              <div className="text-sm text-muted-foreground font-medium mb-2">{t('sidebar.noSessions')}</div>
+              <div className="text-xs text-muted-foreground/70">{t('sidebar.noSessionsTip')}</div>
+            </div>
+          )}
 
-        {hasSessions && (
-          <div className="py-2">
-            {sessions.map((s) => (
-              <div
-                key={s.id}
-                className={`group mx-2 mb-2 rounded-xl transition-all duration-300 ${
-                  activeId === s.id
-                    ? 'bg-gradient-card shadow-md ring-2 ring-primary/20 scale-[1.02]'
-                    : 'bg-card/60 hover:bg-card hover:shadow-lg hover:scale-[1.01]'
-                }`}
-              >
-                <div className="p-3">
-                  {editingId === s.id ? (
-                    // 编辑状态
-                    <div className="space-y-2">
-                      <input
-                        type="text"
-                        value={editingTitle}
-                        onChange={(e) => setEditingTitle(e.target.value)}
-                        onKeyDown={handleKeyDown}
-                        className="w-full px-3 py-2 text-sm bg-background border border-input rounded-lg focus:outline-none focus:ring-2 focus:ring-ring focus:border-transparent transition-all duration-200"
-                        placeholder={t('sidebar.inputTitle')}
-                        autoFocus
-                      />
-                      <div className="flex items-center gap-1">
-                        <button
-                          onClick={saveEdit}
-                          className="flex items-center justify-center w-7 h-7 rounded-lg text-green-600 hover:bg-green-50 transition-all duration-200 hover:scale-110"
-                          title={t('actions.save')}
-                        >
-                          <CheckIcon size={14} />
-                        </button>
-                        <button
-                          onClick={cancelEdit}
-                          className="flex items-center justify-center w-7 h-7 rounded-lg text-muted-foreground hover:bg-muted transition-all duration-200 hover:scale-110"
-                          title={t('actions.cancel')}
-                        >
-                          <CancelIcon size={14} />
-                        </button>
+          {hasSessions && (
+            <div className="py-2">
+              {sessions.map((s) => (
+                <div
+                  key={s.id}
+                  className={`group mx-2 mb-2 rounded-xl transition-all duration-300 ${
+                    activeId === s.id
+                      ? 'bg-gradient-card shadow-md ring-2 ring-primary/20 scale-[1.02]'
+                      : 'bg-card/60 hover:bg-card hover:shadow-lg hover:scale-[1.01]'
+                  }`}
+                >
+                  <div className="p-3">
+                    {editingId === s.id ? (
+                      // 编辑状态
+                      <div className="space-y-2">
+                        <input
+                          type="text"
+                          value={editingTitle}
+                          onChange={(e) => setEditingTitle(e.target.value)}
+                          onKeyDown={handleKeyDown}
+                          className="w-full px-3 py-2 text-sm bg-background border border-input rounded-lg focus:outline-none focus:ring-2 focus:ring-ring focus:border-transparent transition-all duration-200"
+                          placeholder={t('sidebar.inputTitle')}
+                          autoFocus
+                        />
+                        <div className="flex items-center gap-1">
+                          <button
+                            onClick={saveEdit}
+                            className="flex items-center justify-center w-7 h-7 rounded-lg text-green-600 hover:bg-green-50 transition-all duration-200 hover:scale-110"
+                            title={t('actions.save')}
+                          >
+                            <CheckIcon size={14} />
+                          </button>
+                          <button
+                            onClick={cancelEdit}
+                            className="flex items-center justify-center w-7 h-7 rounded-lg text-muted-foreground hover:bg-muted transition-all duration-200 hover:scale-110"
+                            title={t('actions.cancel')}
+                          >
+                            <CancelIcon size={14} />
+                          </button>
+                        </div>
                       </div>
-                    </div>
-                  ) : (
-                    // 正常显示状态
-                    <div className="flex items-start justify-between gap-2">
-                      <button
-                        className="flex-1 text-left min-w-0"
-                        onClick={() => activate(s.id)}
-                      >
-                        <div className={`text-sm font-semibold truncate ${
-                          activeId === s.id ? 'text-primary' : 'text-foreground'
-                        }`}>
-                          {s.title || t('sidebar.untitled')}
-                        </div>
-                        <div className="text-xs text-muted-foreground mt-1.5 font-medium">
-                          {new Date(s.createdAt).toLocaleString(i18n.language, {
-                            month: 'short',
-                            day: 'numeric',
-                            hour: '2-digit',
-                            minute: '2-digit'
-                          })}
-                        </div>
-                      </button>
+                    ) : (
+                      // 正常显示状态
+                      <div className="flex items-start justify-between gap-2">
+                        <button
+                          className="flex-1 text-left min-w-0"
+                          onClick={() => activate(s.id)}
+                        >
+                          <div className={`text-sm font-semibold truncate ${
+                            activeId === s.id ? 'text-primary' : 'text-foreground'
+                          }`}>
+                            {s.title || t('sidebar.untitled')}
+                          </div>
+                          <div className="text-xs text-muted-foreground mt-1.5 font-medium">
+                            {new Date(s.createdAt).toLocaleString(i18n.language, {
+                              month: 'short',
+                              day: 'numeric',
+                              hour: '2-digit',
+                              minute: '2-digit'
+                            })}
+                          </div>
+                        </button>
 
-                      <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                        <button
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            beginEdit(s);
-                          }}
-                          className="flex items-center justify-center w-7 h-7 rounded-lg hover:bg-muted/80 text-muted-foreground hover:text-foreground transition-all duration-200 hover:scale-110"
-                          title={t('sidebar.editTitle')}
-                        >
-                          <EditIcon size={14} />
-                        </button>
-                        <button
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            del(s.id);
-                          }}
-                          className="flex items-center justify-center w-7 h-7 rounded-lg hover:bg-red-50 text-muted-foreground hover:text-red-600 transition-all duration-200 hover:scale-110"
-                          title={t('sidebar.deleteSession')}
-                        >
-                          <DeleteIcon size={14} />
-                        </button>
+                        <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              beginEdit(s);
+                            }}
+                            className="flex items-center justify-center w-7 h-7 rounded-lg hover:bg-muted/80 text-muted-foreground hover:text-foreground transition-all duration-200 hover:scale-110"
+                            title={t('sidebar.editTitle')}
+                          >
+                            <EditIcon size={14} />
+                          </button>
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              del(s.id);
+                            }}
+                            className="flex items-center justify-center w-7 h-7 rounded-lg hover:bg-red-50 text-muted-foreground hover:text-red-600 transition-all duration-200 hover:scale-110"
+                            title={t('sidebar.deleteSession')}
+                          >
+                            <DeleteIcon size={14} />
+                          </button>
+                        </div>
                       </div>
-                    </div>
-                  )}
+                    )}
+                  </div>
                 </div>
-              </div>
-            ))}
-          </div>
-        )}
-      </div>
+              ))}
+            </div>
+          )}
+        </div>
 
-      {/* 底部版本信息与更新入口 */}
-      <SidebarUpdateFooter />
-    </aside>
+        {/* 底部版本信息与更新入口 */}
+        <SidebarUpdateFooter />
+      </aside>
     </>
   );
 }

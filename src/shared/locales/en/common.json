@@ -52,7 +52,7 @@
     "welcome": "Welcome to ParallelChat"
   },
   "sidebar": {
-    "history": "His",
+    "history": "History",
     "newSession": "New Session",
     "noSessions": "No sessions yet",
     "noSessionsTip": "A session is created automatically after you start chatting",
@@ -63,6 +63,8 @@
     "confirmDelete": "Are you sure to delete this session?",
     "clearAll": "Clear All",
     "confirmClearAll": "Are you sure to clear all sessions? This action cannot be undone.",
+    "collapse": "Collapse",
+    "expand": "Expand",
     "footerVersion": "Version {{version}}",
     "updateAvailable": "Update available: {{version}}",
     "updating": "Downloading update...",

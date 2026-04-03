@@ -7,58 +7,10 @@ type AiProvider = { id: string; name: string; url: string; handler?: string };
 
 const PRESET_AI: AiProvider[] = [
   {
-    id: 'gemini',
-    name: 'Gemini',
-    url: 'https://gemini.google.com/app',
-    handler: 'gemini',
-  },
-  {
-    id: 'deepseek',
-    name: 'DeepSeek',
-    url: 'https://chat.deepseek.com/',
-    handler: 'deepseek',
-  },
-  {
-    id: 'kimi',
-    name: 'Kimi',
-    url: 'https://kimi.moonshot.cn/',
-    handler: 'kimi',
-  },
-  {
-    id: 'qwen',
-    name: 'Qwen',
-    url: 'https://chat.qwen.ai/',
-    handler: 'qwen',
-  },
-  {
     id: 'chatgpt',
     name: 'ChatGPT',
     url: 'https://chatgpt.com/',
     handler: 'chatgpt',
-  },
-  {
-    id: 'minimax',
-    name: 'Minimax',
-    url: 'https://agent.minimaxi.com/',
-    handler: 'minimax',
-  },
-  {
-    id: 'copilot',
-    name: 'Copilot',
-    url: 'https://copilot.microsoft.com/',
-    handler: 'copilot',
-  },
-  {
-    id: 'perplexity',
-    name: 'Perplexity',
-    url: 'https://www.perplexity.ai/',
-    handler: 'perplexity',
-  },
-  {
-    id: 'metaso',
-    name: 'Metaso',
-    url: 'https://metaso.cn/',
-    handler: 'metaso',
   },
   {
     id: 'claude',
@@ -67,22 +19,82 @@ const PRESET_AI: AiProvider[] = [
     handler: 'claude',
   },
   {
+    id: 'copilot',
+    name: 'Copilot',
+    url: 'https://copilot.microsoft.com/',
+    handler: 'copilot',
+  },
+  {
+    id: 'deepseek',
+    name: 'DeepSeek',
+    url: 'https://chat.deepseek.com/',
+    handler: 'deepseek',
+  },
+  {
     id: 'doubao',
     name: 'Doubao',
     url: 'https://www.doubao.com/',
     handler: 'doubao',
   },
   {
-    id: 'yuanbao',
-    name: 'Yuanbao',
-    url: 'https://yuanbao.tencent.com/',
-    handler: 'yuanbao',
+    id: 'gemini',
+    name: 'Gemini',
+    url: 'https://gemini.google.com/app',
+    handler: 'gemini',
   },
   {
     id: 'glm',
     name: 'GLM',
     url: 'https://chatglm.cn/',
     handler: 'glm',
+  },
+  {
+    id: 'grok',
+    name: 'Grok',
+    url: 'https://grok.com/',
+    handler: 'grok',
+  },
+  {
+    id: 'kimi',
+    name: 'Kimi',
+    url: 'https://kimi.moonshot.cn/',
+    handler: 'kimi',
+  },
+  {
+    id: 'mimo',
+    name: 'MiMo',
+    url: 'https://aistudio.xiaomimimo.com/#/',
+    handler: 'mimo',
+  },
+  {
+    id: 'minimax',
+    name: 'Minimax',
+    url: 'https://agent.minimaxi.com/',
+    handler: 'minimax',
+  },
+  {
+    id: 'metaso',
+    name: 'Metaso',
+    url: 'https://metaso.cn/',
+    handler: 'metaso',
+  },
+  {
+    id: 'perplexity',
+    name: 'Perplexity',
+    url: 'https://www.perplexity.ai/',
+    handler: 'perplexity',
+  },
+  {
+    id: 'qwen',
+    name: 'Qwen',
+    url: 'https://chat.qwen.ai/',
+    handler: 'qwen',
+  },
+  {
+    id: 'yuanbao',
+    name: 'Yuanbao',
+    url: 'https://yuanbao.tencent.com/',
+    handler: 'yuanbao',
   },
 ];
 

@@ -63,6 +63,8 @@
     "confirmDelete": "确定要删除这个会话吗？",
     "clearAll": "清空全部",
     "confirmClearAll": "确定要清空所有会话吗？此操作不可恢复。",
+    "collapse": "折叠",
+    "expand": "展开",
     "footerVersion": "版本 {{version}}",
     "updateAvailable": "发现新版本：{{version}}",
     "updating": "更新下载中...",

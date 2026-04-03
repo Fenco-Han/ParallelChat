@@ -12,7 +12,7 @@ import { buildScript as buildCopilot, buildStatusScript as statusCopilot, buildU
 import { buildScript as buildMinimax, buildStatusScript as statusMinimax, buildUploadCheckScript as uploadMinimax } from './minimax';
 import { buildScript as buildPerplexity, buildStatusScript as statusPerplexity, buildUploadCheckScript as uploadPerplexity } from './perplexity';
 import { buildScript as buildMetaso, buildStatusScript as statusMetaso, buildUploadCheckScript as uploadMetaso } from './metaso';
-
+import { buildScript as buildMimo, buildStatusScript as statusMimo, buildUploadCheckScript as uploadMimo } from './mimo';
 
 
 const handlers: Record<string, (text: string) => string> = {
@@ -30,6 +30,7 @@ const handlers: Record<string, (text: string) => string> = {
   minimax: buildMinimax,
   perplexity: buildPerplexity,
   metaso: buildMetaso,
+  mimo: buildMimo,
 };
 
 export function getInjectionScript(id: string, text: string): string {
@@ -52,6 +53,7 @@ const statusHandlers: Record<string, () => string> = {
   minimax: statusMinimax,
   perplexity: statusPerplexity,
   metaso: statusMetaso,
+  mimo: statusMimo,
 };
 
 export function getStatusCheckScript(id: string): string {
@@ -75,6 +77,7 @@ const uploadHandlers: Record<string, () => string> = {
   minimax: uploadMinimax,
   perplexity: uploadPerplexity,
   metaso: uploadMetaso,
+  mimo: uploadMimo,
 };
 
 export function getUploadCheckScript(id: string): string {

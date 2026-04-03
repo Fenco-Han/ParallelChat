@@ -27,6 +27,7 @@ export default function AppShell() {
   const [groupOrder, setGroupOrder] = useState<string[]>([]);
   const [isMaximized, setIsMaximized] = useState(false);
   const [isFullscreen, setIsFullscreen] = useState(false);
+  const [isSidebarCollapsed, setIsSidebarCollapsed] = useState<boolean>(false);
   const isMac = /Macintosh|Mac OS X/i.test(navigator.userAgent);
 
   // 初始化与订阅语言变化
@@ -347,6 +348,16 @@ export default function AppShell() {
           <Button
             variant="default"
             size="xs"
+            onClick={() => setIsSidebarCollapsed(!isSidebarCollapsed)}
+            className="pc-no-drag h-7 px-2.5 text-xs font-semibold bg-gradient-primary text-primary-foreground hover:opacity-90 border-0 shadow-sm hover:shadow-md transition-all duration-200"
+            title={isSidebarCollapsed ? t('sidebar.expand') : t('sidebar.collapse')}
+          >
+            {isSidebarCollapsed ? "📂" : "📁"}
+          </Button>
+
+          <Button
+            variant="default"
+            size="xs"
             onClick={() => setSettingsOpen(true)}
             className="pc-no-drag h-7 px-2.5 text-xs font-semibold bg-gradient-primary text-primary-foreground hover:opacity-90 border-0 shadow-sm hover:shadow-md transition-all duration-200"
           >
@@ -401,7 +412,7 @@ export default function AppShell() {
 
       {/* 主体区域：侧边栏 + 内容 */}
       <div className="flex flex-1 overflow-hidden">
-        <SessionSidebar />
+        {!isSidebarCollapsed && <SessionSidebar />}
 
         <main className="flex-1 flex flex-col min-w-0 bg-card shadow-lg">
           <Workspace />

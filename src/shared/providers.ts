@@ -15,4 +15,5 @@ export const PROVIDER_CATALOG: AiProvider[] = [
   { id: 'perplexity', name: 'Perplexity', url: 'https://www.perplexity.ai/', handler: 'perplexity' },
   { id: 'metaso', name: 'Metaso', url: 'https://metaso.cn/', handler: 'metaso' },
   { id: 'gemini', name: 'Gemini', url: 'https://gemini.google.com/app', handler: 'gemini' },
+  { id: 'mimo', name: 'MiMo', url: 'https://aistudio.xiaomimimo.com/#/', handler: 'mimo' },
 ];
